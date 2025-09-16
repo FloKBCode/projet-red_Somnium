@@ -2,6 +2,7 @@ package combat
 
 import (
 	"fmt"
+	"somnium/character"
 )
 
 type Monster struct {
@@ -23,7 +24,7 @@ func InitGoblin() Monster {
 		Loot:      []string{"Dague rouillée", "Morceau de cuir"},
 	}
 }
-func (m *Monster) AttackTarget(target *Character) {
+func (m *Monster) AttackTarget(target *character.Character) {
 	target.PvCurr -= m.Attack
 	if target.PvCurr < 0 {
 		target.PvCurr = 0
