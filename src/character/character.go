@@ -26,19 +26,19 @@ type Equipment struct {
 	Feet  string
 }
 
-func InitCharacter(name, race, class string) Character {
-	PvMax, ManaMax := getBaseStats(race, class)
+func InitCharacter(name, race, class string, pvMax, manaMax int) Character {
 	return Character{
 		Name:      name,
+		Race:      race,    // ✅ Ajouté (était manquant)
 		Class:     class,
 		Level:     1,
-		PvMax:     PvMax,
-		PvCurr:    int(math.Round(float64(PvMax) * 0.5)),
-		Inventory: []string{},
-		Money:     20,
+		PvMax:     pvMax,   // ✅ Utiliser les paramètres
+		PvCurr:    int(math.Round(float64(pvMax) * 0.5)),
+		Inventory: []string{"Potion de vie", "Potion de vie", "Potion de vie"}, // ✅ Consignes : 3 potions
+		Money:     100,     // ✅ Consignes : 100 pièces d'or
 		Skills:    []string{"Coup de poing"},
-		ManaCurr:  ManaMax,
-		ManaMax:   ManaMax,
+		ManaCurr:  manaMax, // ✅ Utiliser les paramètres
+		ManaMax:   manaMax,
 		Equipment: Equipment{},
 	}
 }
