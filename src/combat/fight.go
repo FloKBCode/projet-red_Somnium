@@ -75,3 +75,4 @@ func GoblinPattern(goblin *Monster, player *character.Character, turn int) {
 	fmt.Printf("👹 %s attaque %s et inflige %d dégâts ! (%d/%d PV restants)\n",
 		goblin.Name, player.Name, damage, player.PvCurr, player.PvMax)
 }
+

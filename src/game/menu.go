@@ -27,7 +27,7 @@ func MainMenu() {
 			player.DisplayInfo()
 		case 2:
 			fmt.Println("\n📦 Tu fouilles ton inventaire :")
-			AccessInventory(&player)
+			character.AccessInventory(&player)
 		case 3:
 			fmt.Println("\n🏪 Le marchand apparaît dans un éclair de lumière...")
 			fmt.Println("Marchand (à implémenter)")
