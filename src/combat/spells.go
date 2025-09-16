@@ -15,7 +15,7 @@ type Spell struct {
 
 // ----------------- SORTS -----------------
 
-// CoupDePoing : attaque de base
+// CoupDePoing : attaque de base gratuite
 func CoupDePoing(caster *character.Character, target *Monster) int {
 	damage := 8
 	target.CurrentHP -= damage
@@ -46,31 +46,5 @@ func BouleDeFeu(caster *character.Character, target *Monster) int {
 	return damage
 }
 
-// Vérifie si le personnage connaît un sort
-func (c *character.Character) CanCastSpell(spellName string) bool {
-	for _, skill := range c.Skills {
-		if skill == spellName {
-			return true
-		}
-	}
-	return false
-}
+// ----------------- MÉTHODES PERSONNAGE -----------------
 
-// Consomme le mana si possible
-func (c *character.Character) ConsumeMP(cost int) bool {
-	if c.ManaCurr < cost {
-		return false
-	}
-	c.ManaCurr -= cost
-	return true
-}
-
-// Ajoute un sort si pas déjà appris
-func (c *character.Character) LearnSpell(spellName string) bool {
-	if c.CanCastSpell(spellName) {
-		return false
-	}
-	c.Skills = append(c.Skills, spellName)
-	fmt.Printf("%s apprend le sort %s !\n", c.Name, spellName)
-	return true
-}

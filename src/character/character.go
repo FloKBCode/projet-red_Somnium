@@ -15,6 +15,7 @@ type Character struct {
 	PvMax     int
 	PvCurr    int
 	Inventory []string
+	InventorySize int
 	Money     int
 	Skills    []string
 	ManaMax   int
