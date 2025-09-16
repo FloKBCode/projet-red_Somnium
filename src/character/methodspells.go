@@ -1,6 +1,7 @@
 package character
 
 import "fmt"
+// ----------------- MÉTHODES PERSONNAGE -----------------
 
 // Méthodes liées à la magie / sorts sur le type Character.
 // Ces méthodes doivent être définies dans le package 'character'.
