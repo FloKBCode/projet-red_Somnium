@@ -46,5 +46,3 @@ func BouleDeFeu(caster *character.Character, target *Monster) int {
 	return damage
 }
 
-// ----------------- MÉTHODES PERSONNAGE -----------------
-
