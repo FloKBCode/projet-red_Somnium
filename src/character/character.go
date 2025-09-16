@@ -41,6 +41,7 @@ func InitCharacter(name, race, class string, pvMax, manaMax int) Character {
 		PvMax:     pvMax, 
 		PvCurr:    int(math.Round(float64(pvMax) * 0.5)),
 		Inventory: []string{"Potion de vie", "Potion de vie", "Potion de vie"},
+		InventorySize: 10,
 		Money:100,
 		Skills:    []string{"Coup de poing"},
 		ManaCurr:  manaMax, 
@@ -232,4 +233,8 @@ func (c *Character) DisplayXPInfo() {
         remaining := nextLevelXP - c.XPCurr
         fmt.Printf("   Prochain niveau dans : %d XP\n", remaining)
     }
+}
+
+func (c *Character) GetName() string {
+	return c.Name
 }
