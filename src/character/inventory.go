@@ -5,16 +5,7 @@ import (
 	"somnium/ui"
 )
 
-// AddToInventory ajoute un objet si de la place est dispo
-func (c *Character) AddToInventory(item string) bool {
-	if len(c.Inventory) >= c.InventorySize {
-		ui.PrintError("🎒 Inventaire plein !")
-		return false
-	}
-	c.Inventory = append(c.Inventory, item)
-	ui.PrintSuccess("➕ " + item + " ajouté à l’inventaire.")
-	return true
-}
+
 
 // RemoveFromInventory supprime un objet
 func (c *Character) RemoveFromInventory(item string) bool {
@@ -27,30 +18,7 @@ func (c *Character) RemoveFromInventory(item string) bool {
 	return false
 }
 
-// CountItem retourne combien d’objets du même type sont présents
-func (c *Character) CountItem(itemName string) int {
-	count := 0
-	for _, item := range c.Inventory {
-		if item == itemName {
-			count++
-		}
-	}
-	return count
-}
 
-// TakePot consomme une potion de vie
-func (c *Character) TakePot() bool {
-	if !c.RemoveFromInventory("Potion de vie") {
-		ui.PrintError("❌ Pas de potion de vie !")
-		return false
-	}
-	c.PvCurr += 50
-	if c.PvCurr > c.PvMax {
-		c.PvCurr = c.PvMax
-	}
-	ui.PrintSuccess(fmt.Sprintf("💖 Vous récupérez 50 PV ! (%d/%d)", c.PvCurr, c.PvMax))
-	return true
-}
 
 // TakePoison consomme une potion de poison
 func (c *Character) TakePoison() bool {

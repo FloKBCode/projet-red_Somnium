@@ -3,8 +3,8 @@ package game
 import (
 	"fmt"
 	"somnium/character"
-	"somnium/combat"  
-	"somnium/shop"  
+	"somnium/combat"
+	"somnium/shop"
 )
 
 func MainMenu() {
@@ -40,8 +40,17 @@ func MainMenu() {
 			fmt.Println("\n⚔️ Tu t'entraînes dans une arène onirique...")
 			combat.TrainingFight(&player)
 		case 6:
-			DisplayHiddenArtists()
+			fmt.Println("\n📜 Quêtes disponibles :")
+			// Afficher les quêtes disponibles (fonctionnalité à implémenter)
 		case 7:
+			fmt.Println("\n💾 Sauvegarde de la partie...")
+			// Sauvegarder la partie (fonctionnalité à implémenter)
+		case 8:
+			fmt.Println("\n📂 Chargement de la partie...")
+			// Charger une partie sauvegardée (fonctionnalité à implémenter)
+		case 9:
+			DisplayHiddenArtists()
+		case 10:
 			fmt.Println("\n🌙 Ton esprit retourne doucement dans le coma...")
 			return
 		default:
@@ -58,8 +67,11 @@ func displayMenuOptions() {
 	fmt.Println("3. Marchand")
 	fmt.Println("4. Forgeron")
 	fmt.Println("5. Entrainement")
-	fmt.Println("6. Qui sont-ils")
-	fmt.Println("7. Quitter")
+	fmt.Println("6. Quêtes disponibles")
+	fmt.Println("7. Sauvegarder la partie")
+	fmt.Println("8. Charger une partie")
+	fmt.Println("9. Qui sont-ils")
+	fmt.Println("10. Quitter")
 }
 
 // --- Lecture du choix utilisateur ---

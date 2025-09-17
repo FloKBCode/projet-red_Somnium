@@ -18,9 +18,9 @@ type Spell struct {
 // CoupDePoing : attaque de base gratuite
 func CoupDePoing(caster *character.Character, target *Monster) int {
 	damage := 8
-	target.CurrentHP -= damage
-	if target.CurrentHP < 0 {
-		target.CurrentHP = 0
+	target.PvCurr -= damage
+	if target.PvCurr < 0 {
+		target.PvCurr = 0
 	}
 	fmt.Printf("%s utilise Coup de Poing sur %s et inflige %d dégâts !\n",
 		caster.Name, target.Name, damage)
@@ -37,9 +37,9 @@ func BouleDeFeu(caster *character.Character, target *Monster) int {
 		return 0
 	}
 
-	target.CurrentHP -= damage
-	if target.CurrentHP < 0 {
-		target.CurrentHP = 0
+	target.PvCurr -= damage
+	if target.PvCurr < 0 {
+		target.PvCurr = 0
 	}
 	fmt.Printf("%s lance Boule de Feu sur %s et inflige %d dégâts !\n",
 		caster.Name, target.Name, damage)
