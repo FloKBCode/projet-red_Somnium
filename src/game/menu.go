@@ -17,7 +17,7 @@ func MainMenu() {
 			player = character.CharacterCreation()
 			created = true
 			fmt.Println("\n✨ Ton esprit s'éveille dans le Labyrinthe des Cauchemars...")
-			fmt.Println("Personnage créé avec succès !\n")
+			fmt.Printf("Personnage créé avec succès !\n")
 		}
 
 		displayMenuOptions()
