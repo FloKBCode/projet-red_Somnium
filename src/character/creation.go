@@ -1,17 +1,23 @@
 package character
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 )
 
-// validateName vérifie que le nom contient uniquement des lettres.
+// validateName vérifie que le nom contient uniquement des lettres (y compris accentuées).
 func validateName(input string) string {
-	re := regexp.MustCompile(`^[a-zA-Z]+$`)
+	// Utilisation de \p{L} pour accepter toutes les lettres Unicode (Éléonore, José, etc.)
+	re := regexp.MustCompile(`^\p{L}+$`)
+	reader := bufio.NewReader(os.Stdin)
+
 	for !re.MatchString(input) {
 		fmt.Print("⚠️  Ce nom n'est pas autorisé... Choisis un nom fait uniquement de lettres : ")
-		fmt.Scanln(&input)
+		input, _ = reader.ReadString('\n')
+		input = strings.TrimSpace(input)
 	}
 	return input
 }
@@ -21,69 +27,60 @@ func normalizeString(s string) string {
 	if len(s) == 0 {
 		return s
 	}
-	return strings.ToUpper(s[:1]) + strings.ToLower(s[1:])
+	// On sépare au cas où le joueur tape plusieurs mots
+	words := strings.Fields(s)
+	for i := range words {
+		words[i] = strings.ToUpper(words[i][:1]) + strings.ToLower(words[i][1:])
+	}
+	return strings.Join(words, " ")
 }
 
 // selectRace demande au joueur de choisir une race onirique.
 func selectRace() string {
 	fmt.Println("\n🌙 Choisis la forme que ton esprit adoptera dans le Labyrinthe :")
-	fmt.Println("1. Humain – équilibre fragile entre force et volonté.")
-	fmt.Println("2. Elfe – une conscience fine et une magie subtile.")
-	fmt.Println("3. Nain – une endurance forgée dans la pierre des songes.")
-	fmt.Println("4. Spectre – éthéré, mais à la vitalité instable.")
-	fmt.Println("5. Abysse – né de l'ombre, puissant mais consumé de l'intérieur.")
-	
-	var choice int
+	options := []string{
+		"Humain – équilibre fragile entre force et volonté.",
+		"Elfe – une conscience fine et une magie subtile.",
+		"Nain – une endurance forgée dans la pierre des songes.",
+		"Spectre – éthéré, mais à la vitalité instable.",
+		"Abysse – né de l'ombre, puissant mais consumé de l'intérieur.",
+	}
+
 	for {
+		for i, opt := range options {
+			fmt.Printf("%d. %s\n", i+1, opt)
+		}
 		fmt.Print("👉 Ton choix (1-5) : ")
-		_, err := fmt.Scanln(&choice)
-		if err != nil {
-			continue
+
+		var choice int
+		if _, err := fmt.Scanln(&choice); err == nil && choice >= 1 && choice <= len(options) {
+			return strings.Fields(options[choice-1])[0] // renvoie juste le mot clé (ex : "Humain")
 		}
-		switch choice {
-		case 1:
-			return "Humain"
-		case 2:
-			return "Elfe"
-		case 3:
-			return "Nain"
-		case 4:
-			return "Spectre"
-		case 5:
-			return "Abysse"
-		default:
-			fmt.Println("❌ Ce reflet ne peut exister ici... recommence.")
-		}
+		fmt.Println("❌ Ce reflet ne peut exister ici... recommence.")
 	}
 }
 
 // selectClass demande au joueur de choisir une classe de combat.
 func selectClass() string {
 	fmt.Println("\n⚔️  Quelle voie suit ton esprit dans ce cauchemar ?")
-	fmt.Println("1. Guerrier – une force brute, une arme lourde.")
-	fmt.Println("2. Mage – la maîtrise des arcanes du rêve.")
-	fmt.Println("3. Voleur – rapide, précis, insaisissable.")
-	fmt.Println("4. Occultiste – manipule les ombres au prix de sa santé.")
-	
-	var choice int
+	options := []string{
+		"Guerrier – une force brute, une arme lourde.",
+		"Mage – la maîtrise des arcanes du rêve.",
+		"Voleur – rapide, précis, insaisissable.",
+		"Occultiste – manipule les ombres au prix de sa santé.",
+	}
+
 	for {
+		for i, opt := range options {
+			fmt.Printf("%d. %s\n", i+1, opt)
+		}
 		fmt.Print("👉 Ton choix (1-4) : ")
-		_, err := fmt.Scanln(&choice)
-		if err != nil {
-			continue
+
+		var choice int
+		if _, err := fmt.Scanln(&choice); err == nil && choice >= 1 && choice <= len(options) {
+			return strings.Fields(options[choice-1])[0] // renvoie juste le mot clé
 		}
-		switch choice {
-		case 1:
-			return "Guerrier"
-		case 2:
-			return "Mage"
-		case 3:
-			return "Voleur"
-		case 4:
-			return "Occultiste"
-		default:
-			fmt.Println("❌ Cette voie n'existe pas dans le Labyrinthe...")
-		}
+		fmt.Println("❌ Cette voie n'existe pas dans le Labyrinthe...")
 	}
 }
 
@@ -121,7 +118,7 @@ func getBaseStats(race, class string) (maxHP, maxMana int) {
 		maxMana += 40
 	}
 
-	// Sécurité pour éviter les stats négatives ou nulles
+	// Sécurité
 	if maxHP < 1 {
 		maxHP = 1
 	}
@@ -134,9 +131,11 @@ func getBaseStats(race, class string) (maxHP, maxMana int) {
 
 // CharacterCreation crée un nouveau personnage complet.
 func CharacterCreation() Character {
-	var rawName string
+	reader := bufio.NewReader(os.Stdin)
+
 	fmt.Print("💤 Ton esprit dérive... quel est ton nom dans ce rêve ? ")
-	fmt.Scanln(&rawName)
+	rawName, _ := reader.ReadString('\n')
+	rawName = strings.TrimSpace(rawName)
 
 	validatedName := validateName(rawName)
 	name := normalizeString(validatedName)
@@ -145,10 +144,10 @@ func CharacterCreation() Character {
 	class := selectClass()
 
 	maxHP, maxMana := getBaseStats(race, class)
-	
-	// ✅ Correction : utiliser maxHP et maxMana
+
 	hero := InitCharacter(name, race, class, maxHP, maxMana)
-	
+
+	// Message immersif
 	fmt.Printf("\n✨ %s... ton reflet prend forme : %s %s.\n", hero.Name, hero.Race, hero.Class)
 	fmt.Printf("💖 Vitalité : %d | 🔮 Essence : %d\n", hero.PvMax, hero.ManaMax)
 	fmt.Println("Ton voyage commence dans les profondeurs de Somnium...")
