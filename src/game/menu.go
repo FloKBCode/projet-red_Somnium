@@ -3,6 +3,8 @@ package game
 import (
 	"fmt"
 	"somnium/character"
+	"somnium/combat"  
+	"somnium/shop"  
 )
 
 func MainMenu() {
@@ -15,7 +17,7 @@ func MainMenu() {
 			player = character.CharacterCreation()
 			created = true
 			fmt.Println("\n✨ Ton esprit s'éveille dans le Labyrinthe des Cauchemars...")
-			fmt.Println("Personnage créé avec succès !\n")
+			fmt.Printf("Personnage créé avec succès !\n")
 		}
 
 		displayMenuOptions()
@@ -27,16 +29,16 @@ func MainMenu() {
 			player.DisplayInfo()
 		case 2:
 			fmt.Println("\n📦 Tu fouilles ton inventaire :")
-			AccessInventory(&player)
+			character.AccessInventory(&player)
 		case 3:
 			fmt.Println("\n🏪 Le marchand apparaît dans un éclair de lumière...")
-			fmt.Println("Marchand (à implémenter)")
+			shop.MerchantMenu(&player)
 		case 4:
 			fmt.Println("\n⚒️ La forge résonne du métal...")
-			fmt.Println("Forgeron (à implémenter)")
+			shop.ForgeMenu(&player)
 		case 5:
 			fmt.Println("\n⚔️ Tu t'entraînes dans une arène onirique...")
-			fmt.Println("Entrainement (à implémenter)")
+			combat.TrainingFight(&player)
 		case 6:
 			DisplayHiddenArtists()
 		case 7:
