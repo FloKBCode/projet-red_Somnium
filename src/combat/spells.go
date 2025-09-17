@@ -46,3 +46,43 @@ func BouleDeFeu(caster *character.Character, target *Monster) int {
 	return damage
 }
 
+// Coûts en mana des sorts
+var SpellCosts = map[string]int{
+	"Coup de poing": 5,
+	"Boule de feu":  15,
+	"Soin":          10, // Mission 3
+	"Bouclier":      8,  // Mission 3
+}
+
+// 🔋 Restaurer du mana
+func RestoreMana(c *character.Character, amount int) {
+	c.ManaCurr += amount
+	if c.ManaCurr > c.ManaMax {
+		c.ManaCurr = c.ManaMax
+	}
+	fmt.Printf("🔮 %s regagne %d mana ! (%d/%d)\n", c.Name, amount, c.ManaCurr, c.ManaMax)
+}
+
+// 🔮 Obtenir le coût d’un sort
+func ManaCost(c *character.Character, spellName string) int {
+	if cost, ok := SpellCosts[spellName]; ok {
+		return cost
+	}
+	return 0 // Sort inconnu → pas de coût
+}
+
+// Vérifier si on peut lancer un sort
+func CanCastSpell(c *character.Character, spellName string) bool {
+	cost := ManaCost(c, spellName)
+	return c.ManaCurr >= cost
+}
+
+// Consommer du mana
+func ConsumeMana(c *character.Character, spellName string) bool {
+	cost := ManaCost(c, spellName)
+	if c.ManaCurr >= cost {
+		c.ManaCurr -= cost
+		return true
+	}
+	return false
+}
