@@ -12,6 +12,7 @@ type Monster struct {
 	PvCurr int
 	Attack int
 	Loot   []string
+	Phase  int
 }
 
 func InitGoblin() Monster {
@@ -63,6 +64,7 @@ func GenerateMonster(level int, difficulty Difficulty) Monster {
 		PvCurr: baseHP,
 		Attack: baseAttack,
 		Loot:   []string{"Essence spirituelle", "Fragment d'âme"},
+		Phase:  1,
 	}
 
 	AdjustMonsterStats(&monster, difficulty)

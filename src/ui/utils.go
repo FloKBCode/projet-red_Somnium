@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 )
@@ -43,7 +45,18 @@ func ValidateInput(input string, validOptions []string, player Named) bool {
 }
 
 func ClearScreen(player Named) {
-	fmt.Print("\033[H\033[2J")
+	var cmd *exec.Cmd
+
+	switch runtime.GOOS {
+	case "windows":
+		cmd = exec.Command("cmd", "/c", "cls")
+	default:
+		cmd = exec.Command("clear")
+	}
+
+	cmd.Stdout = os.Stdout
+	cmd.Run()
+
 	fmt.Printf("%s ouvre une nouvelle page de son rêve...\n", player.GetName())
 }
 

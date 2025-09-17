@@ -2,11 +2,13 @@ package combat
 
 import (
 	"fmt"
+	"math/rand"
 	"somnium/character"
+	"time"
 )
 
 // TraumaBoss représente le boss final
-type TraumaBoss struct {
+type Boss struct {
 	Name      string
 	MaxHP     int
 	CurrentHP int
@@ -14,9 +16,10 @@ type TraumaBoss struct {
 	Phase     int // Phase du combat
 }
 
-func InitTraumaBoss() TraumaBoss {
-	return TraumaBoss{
-		Name:      "Le Trauma Originel",
+// InitBoss initialise le boss
+func InitBoss(name string) Boss {
+	return Boss{
+		Name:      name,
 		MaxHP:     100,
 		CurrentHP: 100,
 		Attack:    15,
@@ -24,81 +27,59 @@ func InitTraumaBoss() TraumaBoss {
 	}
 }
 
-func FinalBossFight(player *character.Character) bool {
-	boss := InitTraumaBoss()
+// Convertit Boss en Monster pour réutiliser Fight()
+func BossToMonster(boss Boss) Monster {
+	return Monster{
+		Name:   boss.Name,
+		PvMax:  boss.MaxHP,
+		PvCurr: boss.CurrentHP,
+		Attack: boss.Attack,
+		Level:  10,
+		Loot:   []string{},
+		Phase:  boss.Phase,
+	}
+}
+
+// StartFinalBossFight lance le combat final
+func StartFinalBossFight(player *character.Character) bool {
+	rand.Seed(time.Now().UnixNano())
+
+	boss := InitBoss("Trauma")
+	monster := BossToMonster(boss)
 
 	fmt.Println("💀 ═══ COMBAT FINAL ═══ 💀")
 	fmt.Printf("Face à vous se dresse : %s\n", boss.Name)
 	fmt.Println("Il représente tout ce qui vous a brisé...")
 
-	for !player.IsDead() && boss.CurrentHP > 0 {
-		// Phase du boss change selon ses PV
-		if boss.CurrentHP <= 50 && boss.Phase == 1 {
-			boss.Phase = 2
-			boss.Attack = 20
-			fmt.Println("💀 Le trauma révèle sa vraie forme ! Ses attaques se renforcent !")
-		}
+	victory := Fight(player, &monster, false, true)
 
-		// Tour du joueur (menu complet)
-		fmt.Printf("\n⚔️ Boss PV: %d/%d | Vos PV: %d/%d\n",
-			boss.CurrentHP, boss.MaxHP, player.PvCurr, player.PvMax)
-
-		damage := finalBossPlayerTurn(player, &boss)
-		boss.CurrentHP -= damage
-
-		if boss.CurrentHP <= 0 {
-			fmt.Println("🌟 Le trauma se dissout dans la lumière...")
-			fmt.Println("🌟 Vous avez libéré votre esprit !")
-			return true
-		}
-
-		// Tour du boss
-		finalBossAttack(&boss, player)
-
-		if player.IsDead() {
-			fmt.Println("💀 Vos forces vous abandonnent...")
-			return false
-		}
+	if !victory {
+		fmt.Println("💀 Vos forces vous abandonnent...")
+		player.CurrentLayer = 1 // retour à la première couche
+		return false
 	}
 
-	return false
+	fmt.Println("🌟 Le trauma se dissout dans la lumière...")
+	fmt.Println("🌟 Vous avez libéré votre esprit !")
+	return true
 }
 
-func finalBossPlayerTurn(player *character.Character, boss *TraumaBoss) int {
-	fmt.Println("\n--- Actions disponibles ---")
-	fmt.Println("1. Attaque normale (10 dégâts)")
-	fmt.Println("2. Sort puissant (25 dégâts, coûte 20 mana)")
-	fmt.Println("3. Utiliser une potion")
-
-	var choice int
-	fmt.Print("Votre choix (1-3): ")
-	fmt.Scanln(&choice)
-
-	switch choice {
-	case 1:
-		return 10
-	case 2:
-		if player.ManaCurr >= 20 {
-			player.ManaCurr -= 20
-			return 25
-		}
-		fmt.Println("❌ Pas assez de mana !")
-		return 0
-	case 3:
-		if player.CountItem("Potion de vie") > 0 {
-			player.TakePot()
-		} else {
-			fmt.Println("❌ Aucune potion disponible !")
-		}
-		return 0
-	default:
-		fmt.Println("❌ Action invalide !")
-		return 0
-	}
-}
-
-func finalBossAttack(boss *TraumaBoss, player *character.Character) {
+// Fonction spéciale pour adapter l'attaque du boss avec phases
+func monsterAttackPatternBoss(boss *Monster, player *character.Character, turn int) {
 	damage := boss.Attack
+
+	// Phase 2 si HP <= 50%
+	if boss.PvCurr <= boss.PvMax/2 && boss.Phase == 1 {
+		boss.Attack = int(float64(boss.Attack) * 1.33)
+		boss.Phase = 2
+		fmt.Println("💀 Le trauma révèle sa vraie forme ! Ses attaques se renforcent !")
+	}
+
+	// Attaque du boss
+	player.PvCurr -= damage
+	if player.PvCurr < 0 {
+		player.PvCurr = 0
+	}
 
 	switch boss.Phase {
 	case 1:
@@ -106,9 +87,5 @@ func finalBossAttack(boss *TraumaBoss, player *character.Character) {
 	case 2:
 		fmt.Printf("💀 %s hurle votre désespoir... (%d dégâts)\n", boss.Name, damage)
 	}
-
-	player.PvCurr -= damage
-	if player.PvCurr < 0 {
-		player.PvCurr = 0
-	}
 }
+

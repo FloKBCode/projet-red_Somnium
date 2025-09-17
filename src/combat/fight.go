@@ -2,70 +2,67 @@ package combat
 
 import (
 	"fmt"
+	"math/rand"
+	"time"
 	"somnium/character"
 )
 
-// État d’un combat
+// État du combat
 type CombatState struct {
-	Turn         int
-	PlayerAlive  bool
-	MonsterAlive bool
+	Turn          int
+	PlayerAlive   bool
+	MonsterAlive  bool
+	ShieldTurns   int // tours restants de bouclier
 }
 
-// Combat d’entrainement contre un gobelin
-func TrainingFight(player *character.Character) {
-	goblin := InitGoblin()
+// ⚔️ Combat générique
+func Fight(player *character.Character, monster *Monster, isTraining bool, isBoss bool) bool {
+	rand.Seed(time.Now().UnixNano())
+
 	state := CombatState{
-		Turn:         1,
-		PlayerAlive:  true,
-		MonsterAlive: true,
+		Turn:          1,
+		PlayerAlive:   true,
+		MonsterAlive:  true,
+		ShieldTurns:   0,
 	}
 
-	fmt.Println("⚔️ Début du combat d'entraînement contre un Gobelin !")
-	goblin.DisplayInfo() // Afficher infos monstre
+	fmt.Printf("\n⚔️ %s apparaît ! (%d/%d PV)\n", monster.Name, monster.PvCurr, monster.PvMax)
 
 	for state.PlayerAlive && state.MonsterAlive {
 		fmt.Printf("\n=== Tour %d ===\n", state.Turn)
 
-		// Tour du joueur avec menu
-		state.MonsterAlive = CharacterTurn(player, &goblin, state.Turn)
+		// Tour du joueur
+		state.MonsterAlive = CharacterTurn(player, monster, &state)
 		if !state.MonsterAlive {
-			fmt.Println("🎉 Le joueur a vaincu le Gobelin !")
-
-			// ✅ GAIN D'XP À LA VICTOIRE
-			player.GainXP(25) // GoblinXP = 25
-
-			// Gestion de la mort
-			if player.IsDead() {
-				fmt.Println("💀 Mais vous succombez aussi à vos blessures...")
-				player.Resurrect()
-			}
-			break
+			handleVictory(player, monster, isTraining, isBoss)
+			return true
 		}
 
-		// Tour du gobelin
-		GoblinPattern(&goblin, player, state.Turn)
+		// Tour du monstre
+		monsterAttackPattern(monster, player, &state)
 		if player.IsDead() {
 			state.PlayerAlive = false
-			fmt.Println("💀 Le joueur a été vaincu par le Gobelin...")
-			player.Resurrect() // Auto-résurrection
-			break
+			handleDefeat(player, monster, isTraining)
+			return false
 		}
 
 		state.Turn++
 	}
+
+	return false
 }
 
-func CharacterTurn(player *character.Character, monster *Monster, turn int) bool {
+// 🎯 Tour du joueur
+func CharacterTurn(player *character.Character, monster *Monster, state *CombatState) bool {
 	fmt.Printf("\n⚔️ C'est votre tour, %s !\n", player.Name)
 	fmt.Printf("💖 PV : %d/%d | 🔮 Mana : %d/%d\n",
 		player.PvCurr, player.PvMax, player.ManaCurr, player.ManaMax)
 
 	fmt.Println("\n--- Menu de combat ---")
-	fmt.Println("1. Attaquer (attaque basique 5 dégâts)")
-	fmt.Println("2. Sorts (si mana suffisant)")
-	fmt.Println("3. Inventaire (potion)")
-	fmt.Println("4. Fuir (retour menu)")
+	fmt.Println("1. Attaquer (Coup de poing)")
+	fmt.Println("2. Sorts")
+	fmt.Println("3. Inventaire")
+	fmt.Println("4. Fuir")
 
 	var choice int
 	fmt.Print("👉 Votre choix : ")
@@ -73,30 +70,44 @@ func CharacterTurn(player *character.Character, monster *Monster, turn int) bool
 
 	switch choice {
 	case 1:
-		damage := 5
-		monster.PvCurr -= damage
-		if monster.PvCurr < 0 {
-			monster.PvCurr = 0
-		}
-		fmt.Printf("💥 %s attaque %s et inflige %d dégâts ! (%d/%d PV restants)\n",
-			player.Name, monster.Name, damage, monster.PvCurr, monster.PvMax)
+		CoupDePoing(player, monster)
 
 	case 2:
-		if player.ManaCurr >= 15 {
-			player.ManaCurr -= 15
-			damage := 18
-			monster.PvCurr -= damage
-			if monster.PvCurr < 0 {
-				monster.PvCurr = 0
+		fmt.Println("\n--- Sorts disponibles ---")
+		fmt.Println("1. Boule de Feu (15 mana)")
+		fmt.Println("2. Soin (10 mana)")
+		fmt.Println("3. Bouclier (8 mana)")
+
+		var spellChoice int
+		fmt.Print("👉 Choix du sort : ")
+		fmt.Scanln(&spellChoice)
+
+		switch spellChoice {
+		case 1:
+			BouleDeFeu(player, monster)
+		case 2:
+			if ConsumeMana(player, "Soin") {
+				heal := 20
+				player.PvCurr += heal
+				if player.PvCurr > player.PvMax {
+					player.PvCurr = player.PvMax
+				}
+				fmt.Printf("💖 %s se soigne de %d PV (%d/%d)\n", player.Name, heal, player.PvCurr, player.PvMax)
+			} else {
+				fmt.Println("❌ Pas assez de mana !")
 			}
-			fmt.Printf("🔥 %s lance Boule de Feu et inflige %d dégâts ! (%d/%d PV restants)\n",
-				player.Name, damage, monster.PvCurr, monster.PvMax)
-		} else {
-			fmt.Println("❌ Pas assez de mana pour lancer un sort !")
+		case 3:
+			if ConsumeMana(player, "Bouclier") {
+				state.ShieldTurns = 3
+				fmt.Printf("🛡️ %s active un bouclier pour 3 tours !\n", player.Name)
+			} else {
+				fmt.Println("❌ Pas assez de mana !")
+			}
+		default:
+			fmt.Println("❌ Sort invalide.")
 		}
 
 	case 3:
-		fmt.Println("🎒 Accès à l'inventaire...")
 		if player.CountItem("Potion de vie") > 0 {
 			player.TakePot()
 		} else {
@@ -114,66 +125,21 @@ func CharacterTurn(player *character.Character, monster *Monster, turn int) bool
 	return !monster.IsDead()
 }
 
-// Pattern d’attaque du gobelin
-func GoblinPattern(goblin *Monster, player *character.Character, turn int) {
-	damage := goblin.Attack
-
-	// Tous les 3 tours → attaque renforcée
-	if turn%3 == 0 {
-		damage *= 2
-		fmt.Println("⚡ Le Gobelin concentre ses forces pour une attaque puissante !")
-	}
-
-	player.PvCurr -= damage
-	if player.PvCurr < 0 {
-		player.PvCurr = 0
-	}
-
-	fmt.Printf("👹 %s attaque %s et inflige %d dégâts ! (%d/%d PV restants)\n",
-		goblin.Name, player.Name, damage, player.PvCurr, player.PvMax)
-}
-
-func StartFight(player *character.Character, monster Monster) error {
-	state := CombatState{
-		Turn:         1,
-		PlayerAlive:  true,
-		MonsterAlive: true,
-	}
-
-	fmt.Printf("\n⚔️ Combat contre %s !\n", monster.Name)
-	monster.DisplayInfo()
-
-	for state.PlayerAlive && state.MonsterAlive {
-		fmt.Printf("\n=== Tour %d ===\n", state.Turn)
-
-		state.MonsterAlive = CharacterTurn(player, &monster, state.Turn)
-		if !state.MonsterAlive {
-			handleVictory(player, &monster)
-			return nil
-		}
-
-		monsterAttackPattern(&monster, player, state.Turn)
-		if player.IsDead() {
-			state.PlayerAlive = false
-			handleDefeat(player, &monster)
-			return fmt.Errorf("combat perdu")
-		}
-
-		state.Turn++
-	}
-	return nil
-}
-
-func StartBossFight(player *character.Character, boss Monster) bool {
-	err := StartFight(player, boss)
-	return err == nil
-}
-
-func monsterAttackPattern(monster *Monster, player *character.Character, turn int) {
+// 👹 Attaque du monstre
+func monsterAttackPattern(monster *Monster, player *character.Character, state *CombatState) {
 	damage := monster.Attack
-	if turn%3 == 0 {
+
+	// Attaque spéciale tous les 3 tours
+	if state.Turn%3 == 0 {
 		damage = int(float64(damage) * 1.5)
 		fmt.Printf("⚡ %s concentre ses forces !\n", monster.Name)
+	}
+
+	// Réduction par bouclier
+	if state.ShieldTurns > 0 {
+		damage /= 2
+		state.ShieldTurns--
+		fmt.Println("🛡️ Bouclier réduit les dégâts de moitié !")
 	}
 
 	player.PvCurr -= damage
@@ -185,39 +151,59 @@ func monsterAttackPattern(monster *Monster, player *character.Character, turn in
 		monster.Name, player.Name, damage, player.PvCurr, player.PvMax)
 }
 
-func handleVictory(player *character.Character, monster *Monster) {
+// 🎉 Victoire
+func handleVictory(player *character.Character, monster *Monster, isTraining bool, isBoss bool) {
 	fmt.Printf("🎉 Vous avez vaincu %s !\n", monster.Name)
+
+	if isTraining {
+		player.GainXP(25)
+		player.Resurrect()
+		return
+	}
+
+	// XP normal
 	xpGain := 25 + (monster.Level * 10)
+	if isBoss {
+		xpGain *= 2
+	}
 	player.GainXP(xpGain)
 
-	// Drop de loot
+	// Loot
 	if len(monster.Loot) > 0 {
-		loot := monster.Loot[0] // Simplifié pour l'exemple
+		loot := monster.Loot[0]
 		player.AddToInventory(loot)
 		fmt.Printf("🎁 Vous trouvez : %s\n", loot)
 	}
 }
 
-func handleDefeat(player *character.Character, monster *Monster) {
+// 💀 Défaite
+func handleDefeat(player *character.Character, monster *Monster, isTraining bool) {
 	fmt.Printf("💀 Vous avez été vaincu par %s...\n", monster.Name)
-	player.Resurrect()
-}
-	
-
-func handleBossLayer(player *character.Character) {
-	boss := GenerateBoss(player.Level)
-	victory := StartBossFight(player, boss)
-
-	if !victory {
-		gameOver(player)
-		return
+	if isTraining {
+		player.Resurrect()
+		fmt.Println("✨ Vous revenez à la vie pour continuer l'entraînement.")
+	} else {
+		player.Resurrect()
+		fmt.Println("✨ Vous êtes soigné mais perdez votre progression.")
 	}
-
-	fmt.Println("\n🌟 Félicitations ! Vous avez vaincu vos démons intérieurs !")
-	// TODO: Ajouter récompenses spéciales
 }
 
-func gameOver(player *character.Character) {
-	fmt.Println("\n💀 Votre esprit sombre dans les ténèbres...")
-	player.CurrentLayer = 1 // Retour à la première couche
+// 🎓 Combat d’entraînement
+func TrainingFight(player *character.Character) {
+	goblin := InitGoblin()
+	Fight(player, &goblin, true, false)
+}
+
+// ⚔️ Combat normal
+func StartFight(player *character.Character, monster Monster) error {
+	victory := Fight(player, &monster, false, false)
+	if !victory {
+		return fmt.Errorf("combat perdu contre %s", monster.Name)
+	}
+	return nil
+}
+
+// 👑 Combat de boss
+func StartBossFight(player *character.Character, boss Monster) bool {
+	return Fight(player, &boss, false, true)
 }

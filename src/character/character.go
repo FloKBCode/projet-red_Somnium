@@ -25,6 +25,7 @@ type Character struct {
 	XPMax         int
 	XPUpgrades    int
 	CurrentLayer  int
+	IsShielded    bool
 }
 
 type Equipment struct {
@@ -52,6 +53,7 @@ func InitCharacter(name, race, class string, pvMax, manaMax int) Character {
 		XPMax:         100,
 		XPUpgrades:    0,
 		CurrentLayer:  1,
+		IsShielded:    false,
 	}
 }
 
