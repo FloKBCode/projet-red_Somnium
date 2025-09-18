@@ -150,12 +150,12 @@ func (c *Character) UseItem(itemName string) bool {
 	for i, item := range c.Inventory {
 		if strings.EqualFold(item, itemName) {
 			switch strings.ToLower(itemName) {
-			case "potion de rêve":
+			case "potion de vie":
 				c.PvCurr += 20
 				if c.PvCurr > c.PvMax {
 					c.PvCurr = c.PvMax
 				}
-			case "amulette du souvenir":
+			case "potion de mana":
 				c.ManaCurr += 10
 				if c.ManaCurr > c.ManaMax {
 					c.ManaCurr = c.ManaMax
@@ -190,17 +190,42 @@ func (c *Character) AddToInventory(item string) bool {
 	return true
 }
 
-func (c *Character) TakePot() {
-	if c.CountItem("Potion de vie") > 0 {
-		c.UseItem("Potion de vie")
-		c.PvCurr += 30
-		if c.PvCurr > c.PvMax {
-			c.PvCurr = c.PvMax
+func (c *Character) TakeItem(itemName string) {
+	switch strings.ToLower(itemName) {
+	case "potion de vie":
+		if c.PvCurr >= c.PvMax {
+			fmt.Println("💊 Vos PV sont déjà au maximum !")
+			return
 		}
-		fmt.Printf("💊 Vous utilisez une potion. PV: %d/%d\n", c.PvCurr, c.PvMax)
+		if c.CountItem("Potion de vie") > 0 {
+			c.UseItem("Potion de vie")
+			c.PvCurr += 30
+			if c.PvCurr > c.PvMax {
+				c.PvCurr = c.PvMax
+			}
+			fmt.Printf("💖 Vous buvez une potion de vie. PV: %d/%d\n", c.PvCurr, c.PvMax)
+		} else {
+			fmt.Println("❌ Aucune potion de vie disponible !")
+		}
+	case "potion de mana":
+		if c.ManaCurr >= c.ManaMax {
+			fmt.Println("🔮 Votre énergie magique est déjà au maximum !")
+			return
+		}
+		if c.CountItem("Potion de mana") > 0 {
+			c.UseItem("Potion de mana")
+			c.ManaCurr += 20
+			if c.ManaCurr > c.ManaMax {
+				c.ManaCurr = c.ManaMax
+			}
+			fmt.Printf("✨ Vous buvez une potion de mana. Mana: %d/%d\n", c.ManaCurr, c.ManaMax)
+		} else {
+			fmt.Println("❌ Aucune potion de mana disponible !")
+		}
+	default:
+		fmt.Println("❌ Cet objet ne peut pas être utilisé directement !")
 	}
 }
-
 // GainXP fait gagner de l'expérience au personnage
 func (c *Character) GainXP(amount int) {
 	ui.PrintSuccess(fmt.Sprintf("✨ Vous gagnez %d points d'expérience !", amount))
@@ -303,4 +328,8 @@ func (c *Character) RollInitiative() {
 	c.Initiative = baseRoll + bonus
 	fmt.Printf("🎲 %s lance l'initiative : %d (base) + %d (classe) = %d\n", 
 		c.Name, baseRoll, bonus, c.Initiative)
+}
+
+func (c *Character) RestoreHealth() {
+	c.PvCurr = c.PvMax
 }

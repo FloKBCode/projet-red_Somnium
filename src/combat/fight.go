@@ -7,6 +7,7 @@ import (
 	"somnium/character"
 	"somnium/ui"
 	"strings"
+	"somnium/quest"
 )
 
 // État du combat
@@ -22,14 +23,18 @@ type CombatState struct {
 func Fight(player *character.Character, monster *Monster, isTraining bool, isBoss bool) bool {
 	rand.Seed(time.Now().UnixNano())
 
+	playerFirst := DetermineFirstPlayer(player, monster)
+
 	state := CombatState{
 		Turn:          1,
 		PlayerAlive:   true,
 		MonsterAlive:  true,
 		ShieldTurns:   0,
+		PlayerFirst:   playerFirst,
 	}
 
-	fmt.Printf("\n⚔️ %s apparaît ! (%d/%d PV)\n", monster.Name, monster.PvCurr, monster.PvMax)
+	ui.PrintInfo(fmt.Sprintf("\n⚔️ %s apparaît ! (%d/%d PV)", monster.Name, monster.PvCurr, monster.PvMax))
+	monster.DisplayInfo()
 
 	for state.PlayerAlive && state.MonsterAlive {
 		fmt.Printf("\n=== Tour %d ===\n", state.Turn)
@@ -77,20 +82,45 @@ func CharacterTurn(player *character.Character, monster *Monster, state *CombatS
 	case 2:
 		handleSpellMenu(player, monster, state)
 	case 3:
-		if player.CountItem("Potion de vie") > 0 {
-			player.TakePot()
-		} else {
-			ui.PrintError("❌ Aucune potion disponible !")
-		}
+		character.AccessInventory(player)
+    var invChoice int
+    fmt.Scanln(&invChoice)
+    if invChoice < 1 || invChoice > len(player.Inventory) {
+        ui.PrintError("❌ Choix invalide")
+        break
+    }
+    item := player.Inventory[invChoice-1]
+
+    // Vérification PV / Mana
+    switch item {
+    case "Potion de vie":
+        if player.PvCurr >= player.PvMax {
+            ui.PrintError("💖 Vos PV sont déjà au maximum !")
+            break
+        }
+    case "Potion de mana":
+        if player.ManaCurr >= player.ManaMax {
+            ui.PrintError("🔮 Votre mana est déjà au maximum !")
+            break
+        }
+    }
+
+    player.UseItem(item)
 	case 4:
 		ui.PrintInfo("💨 Vous fuyez le combat...")
 		return false
 	default:
 		ui.PrintError("❌ Choix invalide, vous perdez votre tour !")
 	}
+if monster.PvCurr > 0 {
+		ui.PrintInfo(fmt.Sprintf("👹 %s : %d/%d PV restants", monster.Name, monster.PvCurr, monster.PvMax))
+	} else {
+		ui.PrintSuccess(fmt.Sprintf("💀 %s est vaincu !", monster.Name))
+	}
 
 	return !monster.IsDead()
 }
+
 // 👹 Attaque du monstre
 func monsterAttackPattern(monster *Monster, player *character.Character, state *CombatState) {
 	damage := monster.Attack
@@ -119,26 +149,33 @@ func monsterAttackPattern(monster *Monster, player *character.Character, state *
 
 // 🎉 Victoire
 func handleVictory(player *character.Character, monster *Monster, isTraining bool, isBoss bool) {
-	fmt.Printf("🎉 Vous avez vaincu %s !\n", monster.Name)
+	ui.PrintSuccess(fmt.Sprintf("🎉 Vous avez vaincu %s !", monster.Name))
 
-	if isTraining {
+	if !isTraining {
+		// ✅ AJOUTER : Mise à jour des quêtes
+		quest.UpdateQuestProgress("kill", monster.Name, 1)
+		
+		// XP et loot
+		xpGain := 25 + (monster.Level * 10)
+		if isBoss {
+			xpGain *= 2
+		}
+		player.GainXP(xpGain)
+
+		// Loot
+		if len(monster.Loot) > 0 {
+			loot := monster.Loot[0]
+			player.AddToInventory(loot)
+			ui.PrintSuccess(fmt.Sprintf("🎁 Vous trouvez : %s", loot))
+			
+			// ✅ AJOUTER : Mise à jour quête collect
+			quest.UpdateQuestProgress("collect", loot, 1)
+		}
+	} else {
 		player.GainXP(25)
-		player.Resurrect()
-		return
-	}
-
-	// XP normal
-	xpGain := 25 + (monster.Level * 10)
-	if isBoss {
-		xpGain *= 2
-	}
-	player.GainXP(xpGain)
-
-	// Loot
-	if len(monster.Loot) > 0 {
-		loot := monster.Loot[0]
-		player.AddToInventory(loot)
-		fmt.Printf("🎁 Vous trouvez : %s\n", loot)
+		if player.IsDead() {
+			player.Resurrect()
+		}
 	}
 }
 

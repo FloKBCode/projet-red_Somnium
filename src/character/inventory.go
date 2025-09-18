@@ -52,7 +52,7 @@ func (c *Character) UpgradeInventorySlot() bool {
 	return true
 }
 
-// AccessInventory permet d’utiliser un objet depuis le sac
+
 func AccessInventory(player *Character) {
 	for {
 		fmt.Printf("\n=== Inventaire (%d/%d) ===\n", len(player.Inventory), player.InventorySize)
@@ -79,13 +79,22 @@ func AccessInventory(player *Character) {
 		}
 
 		item := player.Inventory[choice-1]
+
 		switch item {
 		case "Potion de vie":
-			player.TakePot()
-		case "Potion de poison":
-			player.TakePoison()
-		default:
-			player.UseItem(item)
+			if player.PvCurr >= player.PvMax {
+				ui.PrintError("💖 Vos PV sont déjà au maximum !")
+				continue
+			}
+			ui.PrintSuccess("💖 Vos PV augmentent !")
+		case "Potion de mana":
+			if player.ManaCurr >= player.ManaMax {
+				ui.PrintError("🔮 Votre mana est déjà au maximum !")
+				continue
+			}
+			ui.PrintSuccess("🔮 Votre mana augmente !")
 		}
+
+		player.UseItem(item)
 	}
 }

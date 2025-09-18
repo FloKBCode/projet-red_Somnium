@@ -79,14 +79,14 @@ func MainMenu() {
 			ui.PressEnterToContinue(&player)
 			ui.ClearScreen(&player)
 			combat.TrainingFight(&player)
-		case 6:
+		case 7:
 			ui.PrintInfo("\n🌀 Exploration d'une couche du Labyrinthe...")
 			ui.PressEnterToContinue(&player)
 			if err := ExploreLayer(&player); err != nil {
 				ui.PrintError(fmt.Sprintf("❌ Erreur : %v", err))
 			}
 			ui.PressEnterToContinue(&player)
-		case 7:
+		case 6:
 			ui.PrintInfo("\n📜 Quêtes disponibles :")
 			ui.PrintInfo("🚧 Fonctionnalité en cours de développement...")
 			ui.PressEnterToContinue(&player)

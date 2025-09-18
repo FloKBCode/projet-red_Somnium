@@ -3,8 +3,12 @@ package game
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"somnium/character"
 	"somnium/combat"
+	"somnium/ui"
+	"time"
+	"somnium/quest"
 )
 
 const (
@@ -15,6 +19,7 @@ const (
 var (
 	ErrInvalidLayer = errors.New("couche invalide")
 	ErrNilPlayer    = errors.New("joueur invalide")
+	ErrExploration  = errors.New("erreur d'exploration")
 )
 
 type Material struct {
@@ -139,15 +144,17 @@ func ExploreLayer(player *character.Character) error {
 		return ErrNilPlayer
 	}
 
-	currentLayer := GetPlayerLayer(player)
-	if currentLayer < 0 || currentLayer >= len(Layers) {
+	currentLayerIndex := GetPlayerLayer(player)
+	if currentLayerIndex < 0 || currentLayerIndex >= len(Layers) {
+		ui.PrintError("❌ Couche invalide")
 		return ErrInvalidLayer
 	}
 
-	layer := Layers[currentLayer]
+	layer := Layers[currentLayerIndex]
 
-	fmt.Printf("\n=== %s ===\n", layer.Name)
-	fmt.Println(layer.Description)
+	ui.PrintInfo(fmt.Sprintf("\n🌀 === %s ===", layer.Name))
+	ui.PrintInfo(layer.Description)
+	ui.PrintInfo(fmt.Sprintf("Couche actuelle : %d/%d", player.CurrentLayer, MaxLayer))
 
 	fmt.Printf("\n1. %s\n", layer.Choice1.Text)
 	fmt.Printf("2. %s\n", layer.Choice2.Text)
@@ -157,7 +164,7 @@ func ExploreLayer(player *character.Character) error {
 		fmt.Print("\nVotre choix (1-2): ")
 		_, err := fmt.Scanln(&choice)
 		if err != nil || choice < 1 || choice > 2 {
-			fmt.Println("Choix invalide. Veuillez entrer 1 ou 2.")
+			ui.PrintError("Choix invalide. Veuillez entrer 1 ou 2.")
 			choice = InvalidChoice
 		}
 	}
@@ -167,24 +174,32 @@ func ExploreLayer(player *character.Character) error {
 		selectedChoice = layer.Choice2
 	}
 
-	fmt.Printf("\n%s\n", selectedChoice.FlavorText)
+	ui.PrintInfo(fmt.Sprintf("\n%s", selectedChoice.FlavorText))
 
 	if layer.IsBoss {
-		if err := handleBossLayer(player); err != nil {
-			return fmt.Errorf("erreur dans la couche boss: %w", err)
-		}
-		return nil
+		ui.PrintInfo("💀 Vous sentez une présence terrifiante...")
+		return handleBossLayer(player)
 	}
 
-	// Gestion améliorée du combat
+	// Combat selon le risque
 	if selectedChoice.Risk > 0 {
 		if err := handleCombat(player, selectedChoice); err != nil {
-			return fmt.Errorf("erreur de combat: %w", err)
+			ui.PrintError(fmt.Sprintf("Erreur de combat : %v", err))
+			return err
 		}
 	}
 
-	setPlayerLayer(player, selectedChoice.NextLayer)
-	unlockMerchantItems(player)
+	// Progression de couche
+	if selectedChoice.NextLayer != player.CurrentLayer {
+		setPlayerLayer(player, selectedChoice.NextLayer)
+		if selectedChoice.NextLayer > player.CurrentLayer {
+			ui.PrintSuccess(fmt.Sprintf("🌟 Vous avez progressé vers la couche %d !", selectedChoice.NextLayer))
+		}
+	}
+
+	// Mettre à jour les quêtes
+	quest.UpdateQuestProgress("explore", layer.Name, 1)
+
 	return nil
 }
 
@@ -197,10 +212,10 @@ func handleCombat(player *character.Character, choice LayerChoice) error {
 
 // GetPlayerLayer retourne la couche actuelle du joueur
 func GetPlayerLayer(player *character.Character) int {
-	if player.CurrentLayer < 0 || player.CurrentLayer > MaxLayer {
-		return 0 // Retourne à la première couche si invalide
+	if player.CurrentLayer < 1 || player.CurrentLayer > MaxLayer {
+		return 1 // Retourne à la première couche si invalide
 	}
-	return player.CurrentLayer
+	return player.CurrentLayer - 1 // Index 0-based pour le tableau Layers
 }
 
 // setPlayerLayer définit la couche du joueur
@@ -302,4 +317,19 @@ func unlockMerchantItems(player *character.Character) {
 		return
 	}
 	// TODO: Implémenter le déblocage d'items selon le niveau de couche
+}
+
+// GenerateLoot sélectionne un matériau de loot en fonction de la couche
+func GenerateLoot(layer Layer) Material {
+	var possible []Material
+	for _, m := range Materials {
+		if m.MinLayer <= layer.Level {
+			possible = append(possible, m)
+		}
+	}
+	if len(possible) == 0 {
+		return Material{Name: "Objet inconnu", Rarity: 0, MinLayer: 0}
+	}
+	rand.Seed(time.Now().UnixNano())
+	return possible[rand.Intn(len(possible))]
 }
