@@ -127,7 +127,7 @@ func CharacterTurnNew(player *character.Character, monster *Monster, state *Comb
 	case 1:
 		CoupDePoing(player, monster)
 	case 2:
-		handleSpellMenu(player, monster, state)
+		SpellMenu(player, monster, state)
 	case 3:
 		character.AccessInventory(player)
 		var invChoice int
@@ -137,12 +137,7 @@ func CharacterTurnNew(player *character.Character, monster *Monster, state *Comb
 			break
 		}
 	case 4:
-		// ✅ FUITE CORRECTE
-		ui.PrintInfo("💨 Vous tentez de fuir le combat...")
-		return TurnFlee // ✅ Retourner FUITE, pas false
-	default:
-		ui.PrintError("❌ Choix invalide, vous perdez votre tour !")
-		return TurnContinue
+		handleFlee(player, monster)
 	}
 
 	// Vérifier l'état du monstre après l'action
@@ -274,46 +269,6 @@ func StartBossFight(player *character.Character, boss Monster) bool {
 }
 
 // Gestion du menu des sorts
-func handleSpellMenu(player *character.Character, monster *Monster, state *CombatState) {
-	ui.PrintInfo("\n--- Sorts disponibles ---")
-	ui.PrintInfo("1. Boule de Feu (15 mana)")
-	ui.PrintInfo("2. Soin (10 mana)")
-	ui.PrintInfo("3. Bouclier (8 mana)")
-
-	var spellChoice int
-	ui.PrintInfo("👉 Choix du sort : ")
-	fmt.Scanln(&spellChoice)
-
-	switch spellChoice {
-	case 1:
-		if player.CanCastSpell("Boule de feu") {
-			BouleDeFeu(player, monster)
-		} else {
-			ui.PrintError("❌ Vous ne connaissez pas ce sort !")
-		}
-	case 2:
-		if ConsumeMana(player, "Soin") {
-			heal := 20
-			player.PvCurr += heal
-			if player.PvCurr > player.PvMax {
-				player.PvCurr = player.PvMax
-			}
-			ui.PrintSuccess(fmt.Sprintf("💖 %s se soigne de %d PV (%d/%d)",
-				player.Name, heal, player.PvCurr, player.PvMax))
-		} else {
-			ui.PrintError("❌ Pas assez de mana !")
-		}
-	case 3:
-		if ConsumeMana(player, "Bouclier") {
-			state.ShieldTurns = 3
-			ui.PrintSuccess(fmt.Sprintf("🛡️ %s active un bouclier pour 3 tours !", player.Name))
-		} else {
-			ui.PrintError("❌ Pas assez de mana !")
-		}
-	default:
-		ui.PrintError("❌ Sort invalide.")
-	}
-}
 
 //	Détermine qui commence
 func DetermineFirstPlayer(player *character.Character, monster *Monster) bool {
@@ -337,13 +292,27 @@ func DetermineFirstPlayer(player *character.Character, monster *Monster) bool {
 }
 
 // Gestion de la fuite
-func handleFlee(player *character.Character, monster *Monster) {
-	ui.PrintInfo(fmt.Sprintf("💨 Vous fuyez devant %s !", monster.Name))
-	ui.PrintInfo("Vous retournez au menu principal sans récompense.")
+func handleFlee(player *character.Character, monster *Monster) bool {
+    ui.PrintInfo(fmt.Sprintf("💨 Vous tentez de fuir devant %s...", monster.Name))
 
-	// Optionnel : petite pénalité pour la fuite
-	if player.PvCurr > 10 {
-		player.PvCurr -= 10
-		ui.PrintError("💔 La fuite vous coûte 10 PV (stress)")
-	}
+    chance := 50 + (player.Level*5 - monster.Level*5) // base 50%, modifiée par niveaux
+    if chance < 20 {
+        chance = 20 // minimum 20% de chance
+    }
+    if chance > 90 {
+        chance = 90 // maximum 90% de chance
+    }
+
+    roll := rand.Intn(100)
+    if roll < chance {
+        ui.PrintSuccess("✅ Vous parvenez à fuir !")
+        if player.PvCurr > 10 {
+            player.PvCurr -= 10
+            ui.PrintError("💔 La fuite vous coûte 10 PV (stress).")
+        }
+        return true // fuite réussie
+    }
+
+    ui.PrintError("❌ Vous échouez à fuir ! Le combat continue...")
+    return false // fuite ratée
 }

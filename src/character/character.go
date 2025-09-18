@@ -76,7 +76,7 @@ func InitCharacter(name, race, class string, pvMax, manaMax int) Character {
 		Inventory:     []string{"Potion de vie", "Potion de vie", "Potion de vie", "Potion de mana", "Potion de mana"},
 		InventorySize: 10,
 		Money:         100,
-		Skills:        []string{"Coup de poing"}, // ✅ CORRIGÉ : Plus de Boule de feu automatique
+		Skills:        []string{"Coup de poing","Soin","Bouclier"}, 
 		ManaCurr:      manaMax,
 		ManaMax:       manaMax,
 		Equipment:     Equipment{},

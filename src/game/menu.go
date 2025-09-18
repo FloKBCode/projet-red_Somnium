@@ -118,14 +118,12 @@ func MainMenu() {
 			ui.PressEnterToContinue(&player)
 			ui.ClearScreen(&player)
 			ShowAchievementsMenu(&player) 
-			ui.PressEnterToContinue(&player)
 		case 11:
 			DisplayHiddenArtists()
 			ui.PressEnterToContinue(&player)
 		case 0:
 			ui.PrintInfo("\n🌙 Ton esprit retourne doucement dans le coma...")
-			ui.PressEnterToContinue(&player)
-			ui.ClearScreen(&player)
+			time.Sleep(2 * time.Second)
 			return
 		default:
 			ui.PrintError("❌ Choix invalide, réessaie.")
@@ -144,7 +142,7 @@ func displayMenuOptions() {
 	ui.PrintInfo("7. Exploration d'une couche")
 	ui.PrintInfo("8. Sauvegarder la partie")
 	ui.PrintInfo("9. Charger une partie")
-	ui.PrintInfo("10. Salle des Trophées") // ✅ NOUVEAU
+	ui.PrintInfo("10. Salle des Trophées")
 	ui.PrintInfo("11. Qui sont-ils")
 	ui.PrintInfo("0. Quitter")
 }
@@ -156,7 +154,7 @@ func handleUserInput() int {
 	return choice
 }
 
-// ✅ NOUVEAU : Menu d'inventaire amélioré avec gestion des armes
+
 func handleInventoryMenu(player *character.Character) {
 	for {
 		ui.PrintInfo(fmt.Sprintf("\n=== Inventaire (%d/%d) ===", len(player.Inventory), player.InventorySize))
@@ -165,8 +163,7 @@ func handleInventoryMenu(player *character.Character) {
 			ui.PrintInfo("Votre sac est vide.")
 			return
 		}
-
-		// Afficher inventaire avec types d'objets
+		
 		for i, item := range player.Inventory {
 			itemType := ""
 			if weapon, isWeapon := character.Weapons[item]; isWeapon {
@@ -197,7 +194,7 @@ func handleInventoryMenu(player *character.Character) {
 			player.DisplayEquipment()
 			ui.PressEnterToContinue(player)
 		default:
-			// Essayer de convertir en nombre pour utiliser un objet
+			
 			var itemChoice int
 			if _, err := fmt.Sscanf(choice, "%d", &itemChoice); err == nil {
 				if itemChoice >= 1 && itemChoice <= len(player.Inventory) {
@@ -213,7 +210,7 @@ func handleInventoryMenu(player *character.Character) {
 	}
 }
 
-// ✅ NOUVEAU : Gestion équipement d'arme depuis l'inventaire
+// Gestion équipement d'arme depuis l'inventaire
 func handleWeaponEquip(player *character.Character) {
 	weapons := []string{}
 	weaponIndices := []int{}
@@ -248,7 +245,7 @@ func handleWeaponEquip(player *character.Character) {
 	}
 }
 
-// ✅ NOUVEAU : Utilisation améliorée des objets
+// NOUVEAU : Utilisation  des objets
 func useInventoryItem(player *character.Character, item string) {
 	// Vérifier si c'est une arme
 	if _, isWeapon := character.Weapons[item]; isWeapon {
@@ -261,7 +258,7 @@ func useInventoryItem(player *character.Character, item string) {
 		return
 	}
 	
-	// Vérifier si c'est un équipement
+	
 	if isEquipment(item) {
 		ui.PrintInfo(fmt.Sprintf("Voulez-vous équiper %s ? (o/n)", item))
 		var equipChoice string
