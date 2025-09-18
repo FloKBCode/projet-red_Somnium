@@ -1,10 +1,6 @@
 package character
 
 import "fmt"
-// ----------------- MÉTHODES PERSONNAGE -----------------
-
-// Méthodes liées à la magie / sorts sur le type Character.
-// Ces méthodes doivent être définies dans le package 'character'.
 
 // CanCastSpell vérifie si le personnage connaît le sort.
 func (c *Character) CanCastSpell(spellName string) bool {
@@ -17,7 +13,6 @@ func (c *Character) CanCastSpell(spellName string) bool {
 }
 
 // ConsumeMP consomme du mana si disponible.
-// IMPORTANT : receiver pointeur pour modifier le personnage original.
 func (c *Character) ConsumeMP(cost int) bool {
 	if c.ManaCurr < cost {
 		return false

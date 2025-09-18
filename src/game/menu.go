@@ -117,6 +117,8 @@ func MainMenu() {
 			ui.PressEnterToContinue(&player)
 		case 0:
 			ui.PrintInfo("\n🌙 Ton esprit retourne doucement dans le coma...")
+			ui.PressEnterToContinue(&player)
+			ui.ClearScreen(&player)
 			return
 		default:
 			ui.PrintError("❌ Choix invalide, réessaie.")
@@ -124,7 +126,7 @@ func MainMenu() {
 	}
 }
 
-// --- Affichage du menu ---
+
 func displayMenuOptions() {
 	fmt.Println("\n=== Menu Principal ===")
 	fmt.Println("1. Afficher informations personnage")
@@ -140,7 +142,7 @@ func displayMenuOptions() {
 	fmt.Println("0. Quitter")
 }
 
-// --- Lecture du choix utilisateur ---
+
 func handleUserInput() int {
 	var choice int
 	fmt.Print("Votre choix: ")

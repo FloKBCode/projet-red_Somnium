@@ -36,7 +36,8 @@ var Recipes = []Recipe{
 	},
 }
 
-// ForgeMenu affiche le menu de la forge et gère le craft.
+// ForgeMenu affiche le menu principal de la forge et gère les interactions
+// Permet au joueur de forger des objets avec les matériaux récoltés
 func ForgeMenu(player *character.Character) {
 	for {
 		fmt.Println("\n═══════════════════════════════")
@@ -71,7 +72,8 @@ func ForgeMenu(player *character.Character) {
 	}
 }
 
-// displayCraftableItems montre la liste des objets craftables.
+// displayCraftableItems affiche la liste des objets pouvant être forgés
+// Montre le nom, le coût et les matériaux requis pour chaque recette
 func displayCraftableItems() {
 	ui.PrintInfo("\nArtefacts que vous pouvez forger :")
 	for i, recipe := range Recipes {
@@ -79,7 +81,9 @@ func displayCraftableItems() {
 	}
 }
 
-// craftItem tente de forger un objet.
+// craftItem tente de forger un objet spécifique
+// Vérifie les ressources du joueur et crée l'objet si possible
+// Retourne true si le craft réussit, false sinon
 func craftItem(player *character.Character, itemChoice int) bool {
 	if itemChoice < 0 || itemChoice >= len(Recipes) {
 		ui.PrintError("❌ Le choix s’efface dans le néant.")
@@ -106,7 +110,9 @@ func craftItem(player *character.Character, itemChoice int) bool {
 	return true
 }
 
-// hasRequiredMaterials vérifie que le joueur possède matériaux et or.
+// hasRequiredMaterials vérifie si le joueur possède les ressources nécessaires
+// Contrôle l'or et les matériaux requis pour une recette donnée
+// Retourne true si le joueur a tout ce qu'il faut, false sinon
 func hasRequiredMaterials(player *character.Character, recipe Recipe) bool {
 	if player.Money < recipe.Cost {
 		ui.PrintError(fmt.Sprintf(ui.ErrNotEnoughMoney, recipe.Cost))

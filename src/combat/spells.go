@@ -15,7 +15,6 @@ type Spell struct {
 	Effect   string
 }
 
-// ----------------- SORTS -----------------
 
 // CoupDePoing : attaque de base gratuite
 func CoupDePoing(caster *character.Character, target *Monster) int {
@@ -33,6 +32,7 @@ func CoupDePoing(caster *character.Character, target *Monster) int {
 	return damage
 }
 
+// BouleDeFeu : attaque magique à distance
 func BouleDeFeu(caster *character.Character, target *Monster) int {
 	cost := 15
 	damage := 18
@@ -84,8 +84,6 @@ func Shield(caster *character.Character) {
 	fmt.Printf("🛡️ %s se protège avec un bouclier magique pour ce tour !\n", caster.Name)
 }
 
-// ----------------- OUTILS -----------------
-
 // 🔋 Restaurer du mana
 func RestoreMana(c *character.Character, amount int) {
 	c.ManaCurr += amount
@@ -95,6 +93,7 @@ func RestoreMana(c *character.Character, amount int) {
 	fmt.Printf("🔮 %s regagne %d mana ! (%d/%d)\n", c.Name, amount, c.ManaCurr, c.ManaMax)
 }
 
+// Consomme le mana pour un sort, retourne vrai si réussi
 func ConsumeMana(c *character.Character, spellName string) bool {
 	cost := ManaCost(c, spellName)
 	if c.ManaCurr >= cost {
@@ -104,6 +103,7 @@ func ConsumeMana(c *character.Character, spellName string) bool {
 	return false
 }
 
+// Récupère le coût en mana d'un sort
 func ManaCost(c *character.Character, spellName string) int {
 	if cost, ok := SpellCosts[spellName]; ok {
 		return cost
@@ -112,6 +112,7 @@ func ManaCost(c *character.Character, spellName string) int {
 	// → pas de coût
 }
 
+// Chaîne d'éclairs : attaque électrique avec chance de critique
 func ChaineLightning(caster *character.Character, target *Monster) int {
 	cost := 20
 	damage := 25
@@ -135,6 +136,7 @@ func ChaineLightning(caster *character.Character, target *Monster) int {
 	return damage
 }
 
+// Mur de glace : réduit les dégâts du prochain tour de 75%
 func MurDeGlace(caster *character.Character) {
 	cost := 18
 	if !caster.ConsumeMP(cost) {
@@ -146,7 +148,7 @@ func MurDeGlace(caster *character.Character) {
 	caster.IsShielded = true // Réutilise le système existant mais avec effet renforcé
 	ui.PrintSuccess(fmt.Sprintf("🧊 %s érige un mur de glace protecteur !", caster.Name))
 }
-
+ // Soin ++
 func SoinMajeur(caster *character.Character) {
 	cost := 25
 	heal := 40
@@ -164,6 +166,7 @@ func SoinMajeur(caster *character.Character) {
 		caster.Name, heal, caster.PvCurr, caster.PvMax))
 }
 
+// DraineSoul : récupère de la vie égale à la moitié des dégâts
 func DraineSoul(caster *character.Character, target *Monster) int {
 	cost := 12
 	damage := 15
@@ -178,7 +181,6 @@ func DraineSoul(caster *character.Character, target *Monster) int {
 		target.PvCurr = 0
 	}
 	
-	// Récupère de la vie égale à la moitié des dégâts
 	heal := damage / 2
 	caster.PvCurr += heal
 	if caster.PvCurr > caster.PvMax {
@@ -190,6 +192,7 @@ func DraineSoul(caster *character.Character, target *Monster) int {
 	return damage
 }
 
+// ExplosionPsychique : sort puissant avec malus : coûte aussi de la vie
 func ExplosionPsychique(caster *character.Character, target *Monster) int {
 	cost := 35
 	damage := 45
@@ -198,8 +201,7 @@ func ExplosionPsychique(caster *character.Character, target *Monster) int {
 		ui.PrintError(fmt.Sprintf("%s n'a pas assez de mana pour déclencher une Explosion psychique !", caster.Name))
 		return 0
 	}
-
-	// Sort puissant avec malus : coûte aussi de la vie
+	
 	caster.PvCurr -= 5
 	if caster.PvCurr < 1 {
 		caster.PvCurr = 1
@@ -215,7 +217,7 @@ func ExplosionPsychique(caster *character.Character, target *Monster) int {
 	return damage
 }
 
-
+ // Menu des sorts
 func SpellMenu(player *character.Character, monster *Monster, state *CombatState) {
 	availableSpells := getAvailableSpells(player)
 	
@@ -246,7 +248,7 @@ func SpellMenu(player *character.Character, monster *Monster, state *CombatState
 	selectedSpell := availableSpells[spellChoice-1]
 	castSpell(player, monster, selectedSpell, state)
 }
-
+ //
 func getAvailableSpells(player *character.Character) []string {
 	var available []string
 	for _, skill := range player.Skills {
@@ -257,6 +259,7 @@ func getAvailableSpells(player *character.Character) []string {
 	return available
 }
 
+//
 func castSpell(player *character.Character, monster *Monster, spellName string, state *CombatState) {
 	switch spellName {
 	case "Boule de feu":
@@ -291,7 +294,7 @@ func castSpell(player *character.Character, monster *Monster, spellName string, 
 	}
 }
 
-
+//
 var SpellCosts = map[string]int{
 	"Coup de poing":      0,   
 	"Boule de feu":       15,

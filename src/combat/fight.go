@@ -10,8 +10,10 @@ import (
 	"time"
 )
 
+// Résultats possibles d'un tour
 type TurnResult int
 
+// Résultats possibles d'un tour
 const (
 	TurnContinue TurnResult = iota
 	TurnVictory
@@ -19,6 +21,7 @@ const (
 	TurnDefeat
 )
 
+// État du combat
 type CombatState struct {
 	Turn         int
 	PlayerAlive  bool
@@ -27,7 +30,7 @@ type CombatState struct {
 	PlayerFirst  bool
 }
 
-// ⚔️ Combat générique
+//  Combat générique
 func Fight(player *character.Character, monster *Monster, isTraining bool, isBoss bool) bool {
 	rand.Seed(time.Now().UnixNano())
 
@@ -103,7 +106,7 @@ func Fight(player *character.Character, monster *Monster, isTraining bool, isBos
 	return false
 }
 
-// 🎯 Tour du joueur
+//  Tour
 func CharacterTurnNew(player *character.Character, monster *Monster, state *CombatState) TurnResult {
 	ui.PrintInfo(fmt.Sprintf("\n⚔️ C'est votre tour, %s !", player.Name))
 	ui.PrintInfo(fmt.Sprintf("💖 Vos PV : %d/%d | 🔮 Mana : %d/%d",
@@ -152,7 +155,7 @@ func CharacterTurnNew(player *character.Character, monster *Monster, state *Comb
 	}
 }
 
-// 👹 Attaque du monstre
+// Attaque du monstre
 func monsterAttackPattern(monster *Monster, player *character.Character, state *CombatState) {
 	damage := monster.Attack
 
@@ -178,7 +181,7 @@ func monsterAttackPattern(monster *Monster, player *character.Character, state *
 		monster.Name, player.Name, damage, player.PvCurr, player.PvMax))
 }
 
-// 🎉 Victoire
+//  Victoire
 func handleVictory(player *character.Character, monster *Monster, isTraining bool, isBoss bool) {
 	ui.PrintSuccess(fmt.Sprintf("🎉 Vous avez vaincu %s !", monster.Name))
 
@@ -210,7 +213,7 @@ func handleVictory(player *character.Character, monster *Monster, isTraining boo
 	}
 }
 
-// 💀 Défaite
+// Défaite
 func handleDefeat(player *character.Character, monster *Monster, isTraining bool) {
 	fmt.Printf("💀 Vous avez été vaincu par %s...\n", monster.Name)
 	if isTraining {
@@ -228,7 +231,7 @@ func TrainingFight(player *character.Character) {
 	Fight(player, &goblin, true, false)
 }
 
-// ⚔️ Combat normal
+//  Combat normal
 func StartFight(player *character.Character, monster Monster) error {
 	victory := Fight(player, &monster, false, false)
 	if !victory {
@@ -237,11 +240,12 @@ func StartFight(player *character.Character, monster Monster) error {
 	return nil
 }
 
-// 👑 Combat de boss
+//  Combat de boss
 func StartBossFight(player *character.Character, boss Monster) bool {
 	return Fight(player, &boss, false, true)
 }
 
+// Gestion du menu des sorts
 func handleSpellMenu(player *character.Character, monster *Monster, state *CombatState) {
 	fmt.Println("\n--- Sorts disponibles ---")
 	fmt.Println("1. Boule de Feu (15 mana)")
@@ -279,6 +283,7 @@ func handleSpellMenu(player *character.Character, monster *Monster, state *Comba
 	}
 }
 
+//	Détermine qui commence
 func DetermineFirstPlayer(player *character.Character, monster *Monster) bool {
 	fmt.Println("\n🎲 ═══ JET D'INITIATIVE ═══ 🎲")
 
@@ -298,6 +303,7 @@ func DetermineFirstPlayer(player *character.Character, monster *Monster) bool {
 	return playerWins
 }
 
+// Gestion de la fuite
 func handleFlee(player *character.Character, monster *Monster) {
 	ui.PrintInfo(fmt.Sprintf("💨 Vous fuyez devant %s !", monster.Name))
 	ui.PrintInfo("Vous retournez au menu principal sans récompense.")

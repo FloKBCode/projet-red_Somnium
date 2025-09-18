@@ -31,7 +31,22 @@ func (c *Character) TakePoison() bool {
 	return true
 }
 
-// UpgradeInventorySlot agrandit le sac (3 fois max)
+// CanUpgradeInventorySlot vérifie si le personnage peut améliorer son inventaire
+func (c *Character) CanUpgradeInventorySlot() (bool, int, string) {
+	upgradeCost := 30
+	maxUpgrades := 3
+	
+	if c.XPUpgrades >= maxUpgrades {
+		return false, 0, "🚫 Votre sac ne peut pas être agrandi davantage."
+	}
+	if c.Money < upgradeCost {
+		return false, upgradeCost, "💰 Pas assez de fragments pour améliorer votre sac."
+	}
+	
+	return true, upgradeCost, ""
+}
+
+// UpgradeInventorySlot améliore la taille de l'inventaire du personnage
 func (c *Character) UpgradeInventorySlot() bool {
 	upgradeCost := 30
 	maxUpgrades := 3
@@ -41,18 +56,18 @@ func (c *Character) UpgradeInventorySlot() bool {
 		return false
 	}
 	if c.Money < upgradeCost {
-		ui.PrintError("💰 Pas assez d'or pour améliorer votre sac.")
+		ui.PrintError("💰 Pas assez de fragments pour améliorer votre sac.")
 		return false
 	}
 
 	c.Money -= upgradeCost
 	c.InventorySize += 10
 	c.XPUpgrades++
-	ui.PrintSuccess(fmt.Sprintf("🎒 Votre sac s’élargit (+10 emplacements). Capacité : %d", c.InventorySize))
+	ui.PrintSuccess(fmt.Sprintf("🎒 Votre sac s'élargit (+10 emplacements). Capacité : %d", c.InventorySize))
 	return true
 }
 
-
+// AccessInventory permet au joueur de gérer son inventaire
 func AccessInventory(player *Character) {
 	for {
 		fmt.Printf("\n=== Inventaire (%d/%d) ===\n", len(player.Inventory), player.InventorySize)
@@ -98,3 +113,4 @@ func AccessInventory(player *Character) {
 		player.UseItem(item)
 	}
 }
+

@@ -21,6 +21,7 @@ var (
 	ErrExploration  = errors.New("erreur d'exploration")
 )
 
+// Type M
 type Material struct {
 	Name     string
 	Rarity   int
@@ -158,11 +159,11 @@ func ExploreLayer(player *character.Character) error {
 	fmt.Println("\nComment voulez-vous explorer cette couche ?")
 	fmt.Println("1. Explorer une salle aléatoire (Système de salles avancé)")
 	fmt.Println("2. Faire un choix de progression (Système classique)")
-	
+
 	var explorationChoice int
 	fmt.Print("👉 Votre choix (1-2): ")
 	fmt.Scanln(&explorationChoice)
-	
+
 	if explorationChoice == 1 {
 		// Utiliser le nouveau système de salles
 		room := GenerateRoom(player.CurrentLayer, player)
@@ -219,7 +220,7 @@ func ExploreLayer(player *character.Character) error {
 	return nil
 }
 
-
+// handleCombat gère le combat basé sur le choix du joueur
 func handleCombat(player *character.Character, choice LayerChoice) error {
 	if err := generateCombatForRisk(player, choice.Risk); err != nil {
 		return err
@@ -258,6 +259,7 @@ func generateCombatForRisk(player *character.Character, risk int) error {
 	return combat.StartFight(player, monster)
 }
 
+// dropCraftMaterials gère la récupération des matériaux de craft
 func dropCraftMaterials(player *character.Character, multiplier int) error {
 	if player == nil {
 		return ErrNilPlayer
@@ -275,6 +277,7 @@ func dropCraftMaterials(player *character.Character, multiplier int) error {
 	return nil
 }
 
+// filterMaterialsByLayer filtre les matériaux disponibles selon la couche
 func filterMaterialsByLayer(layer int) []Material {
 	var filtered []Material
 	for _, m := range Materials {
@@ -302,6 +305,7 @@ func handleBossLayer(player *character.Character) error {
 	return giveBossRewards(player)
 }
 
+// giveBossRewards gère les récompenses après avoir vaincu le boss
 func giveBossRewards(player *character.Character) error {
 	// Implémentation des récompenses spéciales
 	return nil
@@ -351,9 +355,10 @@ func GenerateLoot(layer Layer) Material {
 	return possible[rand.Intn(len(possible))]
 }
 
+// displayLayerNarrative affiche la narration spécifique à la couche
 func displayLayerNarrative(layer Layer, player *character.Character) {
 	ui.PrintInfo(fmt.Sprintf("\n🌀 === %s ===", layer.Name))
-	
+
 	// Récits spécifiques par couche
 	switch layer.Level {
 	case 1:
@@ -362,21 +367,21 @@ func displayLayerNarrative(layer Layer, player *character.Character) {
 		ui.PrintInfo("Ici flottent vos souvenirs les plus récents, encore flous et malléables.")
 		time.Sleep(1 * time.Second)
 		ui.PrintInfo("Vous entendez l'écho lointain de votre voix consciente qui vous appelle...")
-		
+
 	case 2:
 		ui.PrintError("🥀 L'air devient plus lourd, chargé de remords...")
 		time.Sleep(1 * time.Second)
 		ui.PrintInfo("Dans cette vallée résonnent tous vos 'si seulement' et vos 'j'aurais dû'.")
 		time.Sleep(1 * time.Second)
 		ui.PrintInfo("Les ombres ici ont la forme de vos choix passés.")
-		
+
 	case 3:
 		ui.PrintError("🕳️ Un froid glacial remonte de l'abîme sous vos pieds...")
 		time.Sleep(1 * time.Second)
 		ui.PrintInfo("Vous êtes maintenant face aux terreurs qui ont façonné votre personnalité.")
 		time.Sleep(1 * time.Second)
 		ui.PrintError("Chaque pas résonne comme un battement de cœur affolé.")
-		
+
 	case 4:
 		ui.PrintError("💀 L'atmosphère devient suffocante, presque tangible...")
 		time.Sleep(1 * time.Second)
@@ -384,7 +389,7 @@ func displayLayerNarrative(layer Layer, player *character.Character) {
 		time.Sleep(1 * time.Second)
 		ui.PrintError("Ici, seuls les plus braves peuvent espérer triompher.")
 	}
-	
+
 	time.Sleep(1500 * time.Millisecond)
 	ui.PrintInfo(layer.Description)
 }

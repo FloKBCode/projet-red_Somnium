@@ -12,7 +12,7 @@ import (
 const (
 	GoblinXP = 25 
 )
-
+// Type Character représente le personnage du joueur.
 type Character struct {
 	Name          string
 	Race          string
@@ -30,17 +30,20 @@ type Character struct {
 	XPCurr        int
 	XPMax         int
 	XPUpgrades    int
-	CurrentLayer  int
+	CurrentLayer  int // Niveau actuel dans le labyrinthe
 	IsShielded    bool
 	Initiative    int
+	TrapResistance int 
+	HasResurrectionStone bool
 }
-
+// Type Equipment représente l'équipement du personnage.
 type Equipment struct {
 	Head  string
 	Chest string
 	Feet  string
 }
 
+// InitCharacter initialise un nouveau personnage avec des valeurs de base.
 func InitCharacter(name, race, class string, pvMax, manaMax int) Character {
 	return Character{
 		Name:          name,
@@ -58,49 +61,42 @@ func InitCharacter(name, race, class string, pvMax, manaMax int) Character {
 		Equipment:     Equipment{},
 		XPCurr:        0,
 		XPMax:         100,
-		XPUpgrades:    0,
+		XPUpgrades:    0, 
 		CurrentLayer:  1,
 		IsShielded:    false,
 		Initiative:    0,
+		TrapResistance: 0,
+		HasResurrectionStone: false,
+
 	}
 }
 
+// DisplayInfo affiche les informations détaillées du personnage.
 func (c *Character) DisplayInfo() {
 	fmt.Println("═══════════════ LABYRINTHE DES CAUCHEMARS ═══════════════")
 	fmt.Printf("Esprit : %s, %s %s, errant entre les couches de conscience.\n",
 		c.Name, c.Race, c.Class)
 	fmt.Printf("Niveau de conscience : %d — chaque pas pourrait être le dernier.\n", c.Level)
 	c.DisplayXPInfo()
-	// HP et Mana
 	fmt.Printf("Vitalité : %d/%d — votre essence vacille entre existence et néant.\n", c.PvCurr, c.PvMax)
 	fmt.Printf("Énergie magique : %d/%d — le flux onirique vous soutient.\n", c.ManaCurr, c.ManaMax)
-
-	// Argent / ressources
 	fmt.Printf("Fragments de mémoire : %d — précieux pour survivre.\n", c.Money)
-
-	// Compétences
 	if len(c.Skills) > 0 {
 		fmt.Printf("Talents de l’esprit éveillé : %v.\n", c.Skills)
 	} else {
 		fmt.Println("Aucun talent conscient pour l’instant, le sommeil est encore lourd.")
 	}
-
-	// Équipement
 	if c.Equipment.Head == "" && c.Equipment.Chest == "" && c.Equipment.Feet == "" {
 		fmt.Println("Aucun artefact ne protège votre enveloppe spectrale.")
 	} else {
 		fmt.Printf("Équipements trouvés dans ce rêve — tête: %s, torse: %s, pieds: %s.\n",
 			c.Equipment.Head, c.Equipment.Chest, c.Equipment.Feet)
 	}
-
-	// Inventaire
 	if len(c.Inventory) == 0 {
 		fmt.Println("Le sac de votre esprit est vide, attendant les reliques des rêves futurs.")
 	} else {
 		fmt.Printf("Dans votre sac éthéré : %v.\n", c.Inventory)
 	}
-
-	// Mort et danger
 	if c.IsDead() {
 		fmt.Println("\n⚠️  Votre essence vacille… la mort dans le Labyrinthe est bien réelle !")
 	} else {
@@ -109,17 +105,20 @@ func (c *Character) DisplayInfo() {
 
 	fmt.Println("══════════════════════════════════════════════════════════")
 }
+
+// IsDead vérifie si le personnage est mort (PV à 0 ou moins).
 func (c *Character) IsDead() bool {
 	return c.PvCurr <= 0
 }
 
-// Resurrect ressuscite le personnage à 50% des HP et Mana max.
+// Resurrect ressuscite le personnage avec la moitié de ses PV et Mana.
 func (c *Character) Resurrect() {
 	c.PvCurr = c.PvMax / 2
 	c.ManaCurr = c.ManaMax / 2
 	fmt.Println("Le personnage a été ressuscité !")
 }
 
+// PoisonEffect applique l'effet de poison au personnage.
 func (c *Character) PoisonEffect() {
 	for i := 0; i < 3; i++ {
 		c.PvCurr -= 10
@@ -135,6 +134,7 @@ func (c *Character) PoisonEffect() {
 	}
 }
 
+// DisplayInventory affiche le contenu de l'inventaire du personnage.
 func (c *Character) DisplayInventory() {
 	if len(c.Inventory) == 0 {
 		fmt.Println("Votre sac est vide.")
@@ -146,6 +146,7 @@ func (c *Character) DisplayInventory() {
 	}
 }
 
+// UseItem utilise un objet de l'inventaire du personnage.
 func (c *Character) UseItem(itemName string) bool {
 	for i, item := range c.Inventory {
 		if strings.EqualFold(item, itemName) {
@@ -171,6 +172,7 @@ func (c *Character) UseItem(itemName string) bool {
 	return false
 }
 
+// CountItem compte le nombre d'instances d'un objet dans l'inventaire.
 func (c *Character) CountItem(itemName string) int {
 	count := 0
 	for _, item := range c.Inventory {
@@ -181,6 +183,7 @@ func (c *Character) CountItem(itemName string) int {
 	return count
 }
 
+// AddToInventory ajoute un objet à l'inventaire du personnage.
 func (c *Character) AddToInventory(item string) bool {
 	if len(c.Inventory) >= c.InventorySize {
 		fmt.Println("Inventaire plein!")
@@ -190,6 +193,7 @@ func (c *Character) AddToInventory(item string) bool {
 	return true
 }
 
+// TakeItem utilise un objet spécifique (potion de vie ou mana) et applique ses effets.
 func (c *Character) TakeItem(itemName string) {
 	switch strings.ToLower(itemName) {
 	case "potion de vie":
@@ -226,6 +230,7 @@ func (c *Character) TakeItem(itemName string) {
 		fmt.Println("❌ Cet objet ne peut pas être utilisé directement !")
 	}
 }
+
 // GainXP fait gagner de l'expérience au personnage
 func (c *Character) GainXP(amount int) {
 	ui.PrintSuccess(fmt.Sprintf("✨ Vous gagnez %d points d'expérience !", amount))
@@ -285,10 +290,6 @@ func (c *Character) LevelUp() {
 
 // CalculateXPNeeded calcule l'XP nécessaire pour un niveau donné
 func (c *Character) CalculateXPNeeded(level int) int {
-	// Formule : Level * 100 (selon consignes)
-	// Niveau 1 → 100 XP
-	// Niveau 2 → 200 XP
-	// Niveau 3 → 300 XP, etc.
 	return level * 100
 }
 
@@ -302,10 +303,12 @@ func (c *Character) DisplayXPInfo() {
 	}
 }
 
+// GetName retourne le nom du personnage.
 func (c *Character) GetName() string {
 	return c.Name
 }
 
+// RollInitiative lance l'initiative pour le personnage en fonction de sa classe.
 func (c *Character) RollInitiative() {
 	// Seed déjà fait dans monster.go
 	baseRoll := rand.Intn(20) + 1
@@ -330,6 +333,7 @@ func (c *Character) RollInitiative() {
 		c.Name, baseRoll, bonus, c.Initiative)
 }
 
+// RestoreHealth restaure les PV du personnage à leur maximum.
 func (c *Character) RestoreHealth() {
 	c.PvCurr = c.PvMax
 }

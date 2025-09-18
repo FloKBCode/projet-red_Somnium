@@ -7,13 +7,13 @@ import (
 	"time"
 )
 
-// TraumaBoss représente le boss final
+// Type Boss représente le boss 
 type Boss struct {
 	Name      string
 	MaxHP     int
 	CurrentHP int
 	Attack    int
-	Phase     int // Phase du combat
+	Phase     int 	
 }
 
 // InitBoss initialise le boss

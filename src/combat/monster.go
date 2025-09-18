@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// Type Monster représente un monstre dans le jeu
 type Monster struct {
 	Name   string
 	Level  int
@@ -18,18 +19,7 @@ type Monster struct {
 	Initiative int
 }
 
-func InitGoblin() Monster {
-	return Monster{
-		Name:   "Gobelin",
-		Level:  1,
-		PvMax:  30,
-		PvCurr: 30,
-		Attack: 5,
-		Loot:   []string{"Dague rouillée", "Morceau de cuir"},
-		Phase:  1,
-		Initiative: RollInitiative(),
-	}
-}
+// Attaque la cible et réduit ses PV
 func (m *Monster) AttackTarget(target *character.Character) {
 	target.PvCurr -= m.Attack
 	if target.PvCurr < 0 {
@@ -37,9 +27,13 @@ func (m *Monster) AttackTarget(target *character.Character) {
 	}
 	fmt.Printf("%s attaque %s et inflige %d dégâts !\n", m.Name, target.Name, m.Attack)
 }
+
+// Vérifie si le monstre est mort
 func (m *Monster) IsDead() bool {
 	return m.PvCurr <= 0
 }
+
+// Affiche les informations du monstre
 func (m *Monster) DisplayInfo() {
 	fmt.Println("══════════════ MONSTRE ══════════════")
 	fmt.Printf("Nom : %s (Niveau %d)\n", m.Name, m.Level)
@@ -77,22 +71,14 @@ func GenerateDefaultMonster(level int, difficulty Difficulty) Monster {
 	return monster
 }
 
-// GenerateBoss crée un boss puissant
-func GenerateBoss(level int) Monster {
-	monster := GenerateDefaultMonster(level+2, Hard)
-	monster.Name = "Trauma Primordial"
-	monster.PvMax *= 2
-	monster.PvCurr = monster.PvMax
-	monster.Attack = int(float64(monster.Attack) * 1.5)
-	monster.Loot = append(monster.Loot, "Cristal de Trauma")
-	return monster
-}
 
+// RollInitiative génère un score d'initiative aléatoire
 func RollInitiative() int {
 	rand.Seed(time.Now().UnixNano())
 	return rand.Intn(20) + 1 // Random 1-20
 }
 
+// Initialisations de monstres spécifiques pour plus de variété
 func InitWeakGoblin() Monster {
 	return Monster{
 		Name:       "Gobelin Craintif",
@@ -106,6 +92,7 @@ func InitWeakGoblin() Monster {
 	}
 }
 
+// InitStrongGoblin initialise un gobelin plus fort
 func InitStrongGoblin() Monster {
 	return Monster{
 		Name:       "Gobelin des Abysses",
@@ -119,6 +106,7 @@ func InitStrongGoblin() Monster {
 	}
 }
 
+// InitNightmareSpider initialise une araignée
 func InitNightmareSpider() Monster {
 	return Monster{
 		Name:       "Araignée du Cauchemar",
@@ -132,6 +120,7 @@ func InitNightmareSpider() Monster {
 	}
 }
 
+// InitShadowWraith initialise un spectre
 func InitShadowWraith() Monster {
 	return Monster{
 		Name:       "Spectre des Ombres",
@@ -145,6 +134,7 @@ func InitShadowWraith() Monster {
 	}
 }
 
+// InitMemoryPhantom initialise un fantôme des souvenirs
 func InitMemoryPhantom() Monster {
 	return Monster{
 		Name:       "Fantôme des Souvenirs",
@@ -154,6 +144,20 @@ func InitMemoryPhantom() Monster {
 		Attack:     7,
 		Loot:       []string{"Fragment de mémoire", "Larme cristalline"},
 		Phase:      1,
+		Initiative: RollInitiative(),
+	}
+}
+
+// InitGoblin initialise un gobelin de base
+func InitGoblin() Monster {
+	return Monster{
+		Name:   "Gobelin",
+		Level:  1,
+		PvMax:  30,
+		PvCurr: 30,
+		Attack: 5,
+		Loot:   []string{"Dague rouillée", "Morceau de cuir"},
+		Phase:  1,
 		Initiative: RollInitiative(),
 	}
 }
@@ -188,4 +192,14 @@ func GenerateMonster(level int, difficulty Difficulty) Monster {
 	
 	AdjustMonsterStats(&selectedMonster, difficulty)
 	return selectedMonster
+}
+// GenerateBoss crée un boss puissant
+func GenerateBoss(level int) Monster {
+	monster := GenerateDefaultMonster(level+2, Hard)
+	monster.Name = "Trauma Primordial"
+	monster.PvMax *= 2
+	monster.PvCurr = monster.PvMax
+	monster.Attack = int(float64(monster.Attack) * 1.5)
+	monster.Loot = append(monster.Loot, "Cristal de Trauma")
+	return monster
 }

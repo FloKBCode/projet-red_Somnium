@@ -155,11 +155,11 @@ func CharacterCreation() Character {
 	return hero
 }
 
+// displayIntroductionSequence affiche une narration.
 func displayIntroductionSequence(hero *Character) {
 	ui.PrintSuccess(fmt.Sprintf("\n✨ %s... ton reflet prend forme : %s %s.\n", hero.Name, hero.Race, hero.Class))
 	ui.PrintInfo("💖 Vitalité : " + fmt.Sprintf("%d", hero.PvMax) + " | 🔮 Essence : " + fmt.Sprintf("%d", hero.ManaMax))
 	
-	// Séquence narrative immersive
 	fmt.Println("\n" + strings.Repeat("═", 60))
 	ui.PrintInfo("🌙 L'ÉVEIL DANS LES TÉNÈBRES 🌙")
 	fmt.Println(strings.Repeat("═", 60))

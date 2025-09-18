@@ -6,6 +6,7 @@ import (
 	"somnium/character"
 )
 
+// Sauvgarde la partie
 func SaveGame(player *character.Character) error {
 	data, err := json.Marshal(player)
 	if err != nil {
@@ -14,6 +15,7 @@ func SaveGame(player *character.Character) error {
 	return os.WriteFile("save.json", data, 0644)
 }
 
+// Charger la partie
 func LoadGame() (*character.Character, error) {
 	data, err := os.ReadFile("save.json")
 	if err != nil {

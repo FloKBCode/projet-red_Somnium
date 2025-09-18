@@ -110,6 +110,7 @@ var gameQuests = []Quest{
 	},
 }
 
+// ShowQuestMenu affiche le menu des quêtes pour le joueur
 func ShowQuestMenu(player *character.Character) {
 	for {
 		ui.PrintInfo("\n📜 === Carnet de Quêtes ===")
@@ -167,6 +168,7 @@ func ShowQuestMenu(player *character.Character) {
 	}
 }
 
+// getAvailableQuests retourne les quêtes disponibles pour le joueur
 func getAvailableQuests(player *character.Character) []Quest {
 	var available []Quest
 	for _, quest := range gameQuests {
@@ -177,6 +179,7 @@ func getAvailableQuests(player *character.Character) []Quest {
 	return available
 }
 
+// getActiveQuests retourne les quêtes actuellement actives
 func getActiveQuests() []Quest {
 	var active []Quest
 	for _, quest := range gameQuests {
@@ -187,6 +190,7 @@ func getActiveQuests() []Quest {
 	return active
 }
 
+// getCompletedQuests retourne les quêtes complétées
 func getCompletedQuests() []Quest {
 	var completed []Quest
 	for _, quest := range gameQuests {
@@ -197,6 +201,7 @@ func getCompletedQuests() []Quest {
 	return completed
 }
 
+// acceptQuest permet au joueur d'accepter une quête
 func acceptQuest(availableQuests []Quest, player *character.Character) {
 	if len(availableQuests) == 0 {
 		return
@@ -228,7 +233,7 @@ func acceptQuest(availableQuests []Quest, player *character.Character) {
 	ui.PrintSuccess(fmt.Sprintf("✅ Quête acceptée : %s", selectedQuest.Title))
 }
 
-// Fonction pour progresser les quêtes (appelée depuis le combat, exploration, etc.)
+// UpdateQuestProgress met à jour la progression des quêtes en fonction des actions du joueur
 func UpdateQuestProgress(action, target string, amount int) {
 	for i := range gameQuests {
 		if gameQuests[i].Status == QuestActive {
@@ -241,7 +246,7 @@ func UpdateQuestProgress(action, target string, amount int) {
 					}
 				}
 			}
-			
+
 			// Vérifier si la quête est complète
 			completed := true
 			for _, obj := range gameQuests[i].Objectives {
@@ -250,7 +255,7 @@ func UpdateQuestProgress(action, target string, amount int) {
 					break
 				}
 			}
-			
+
 			if completed {
 				completeQuest(&gameQuests[i])
 			}
@@ -258,9 +263,11 @@ func UpdateQuestProgress(action, target string, amount int) {
 	}
 }
 
+// completeQuest marque une quête comme complétée et affiche les récompenses
 func completeQuest(quest *Quest) {
 	quest.Status = QuestCompleted
 	ui.PrintSuccess(fmt.Sprintf("🏆 QUÊTE TERMINÉE : %s", quest.Title))
 	ui.PrintSuccess(fmt.Sprintf("💰 Récompense : %d or, %d XP", quest.RewardGold, quest.RewardExp))
 }
-	// TODO: Donner les récompenses au joueur
+
+// TODO: Donner les récompenses au joueur
