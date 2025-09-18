@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"somnium/ui"
 	"strings"
 )
 
@@ -15,7 +16,7 @@ func validateName(input string) string {
 	reader := bufio.NewReader(os.Stdin)
 
 	for !re.MatchString(input) {
-		fmt.Print("⚠️  Ce nom n'est pas autorisé... Choisis un nom fait uniquement de lettres : ")
+		ui.PrintError("⚠️  Ce nom n'est pas autorisé... Choisis un nom fait uniquement de lettres : ")
 		input, _ = reader.ReadString('\n')
 		input = strings.TrimSpace(input)
 	}
@@ -56,7 +57,7 @@ func selectRace() string {
 		if _, err := fmt.Scanln(&choice); err == nil && choice >= 1 && choice <= len(options) {
 			return strings.Fields(options[choice-1])[0] // renvoie juste le mot clé (ex : "Humain")
 		}
-		fmt.Println("❌ Ce reflet ne peut exister ici... recommence.")
+		ui.PrintError("❌ Ce reflet ne peut exister ici... recommence.")
 	}
 }
 
@@ -80,7 +81,7 @@ func selectClass() string {
 		if _, err := fmt.Scanln(&choice); err == nil && choice >= 1 && choice <= len(options) {
 			return strings.Fields(options[choice-1])[0] // renvoie juste le mot clé
 		}
-		fmt.Println("❌ Cette voie n'existe pas dans le Labyrinthe...")
+		ui.PrintError("❌ Cette voie n'existe pas dans le Labyrinthe...")
 	}
 }
 
@@ -133,7 +134,7 @@ func getBaseStats(race, class string) (maxHP, maxMana int) {
 func CharacterCreation() Character {
 	reader := bufio.NewReader(os.Stdin)
 
-	fmt.Print("💤 Ton esprit dérive... quel est ton nom dans ce rêve ? ")
+	ui.PrintInfo("💤 Ton esprit dérive... quel est ton nom dans ce rêve ? ")
 	rawName, _ := reader.ReadString('\n')
 	rawName = strings.TrimSpace(rawName)
 
@@ -151,7 +152,7 @@ func CharacterCreation() Character {
 	fmt.Printf("\n✨ %s... ton reflet prend forme : %s %s.\n", hero.Name, hero.Race, hero.Class)
 	fmt.Printf("💖 Vitalité : %d | 🔮 Essence : %d\n", hero.PvMax, hero.ManaMax)
 	fmt.Println("Ton voyage commence dans les profondeurs de Somnium...")
-	fmt.Println("Souviens-toi : chaque mort dans ce lieu laisse des traces...")
+	ui.PrintError("Souviens-toi : chaque mort dans ce lieu laisse des traces...")
 
 	return hero
 }

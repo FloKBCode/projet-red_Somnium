@@ -64,3 +64,4 @@ func PressEnterToContinue(player Named) {
 	fmt.Printf("%s — Appuyez sur Entrée pour continuer...\n", player.GetName())
 	bufio.NewReader(os.Stdin).ReadString('\n')
 }
+

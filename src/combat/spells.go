@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"somnium/character"
+	"somnium/ui"
 )
 
 // Spell représente un sort avec ses caractéristiques
@@ -19,45 +20,41 @@ type Spell struct {
 // CoupDePoing : attaque de base gratuite
 func CoupDePoing(caster *character.Character, target *Monster) int {
 	damage := 8
-	// Chance de coup critique
 	if rand.Intn(100) < 15 {
 		damage *= 2
-		fmt.Println("💥 Coup critique !")
+		ui.PrintSuccess("💥 Coup critique !")
 	}
 	target.PvCurr -= damage
 	if target.PvCurr < 0 {
 		target.PvCurr = 0
 	}
-	fmt.Printf("%s utilise Coup de Poing sur %s et inflige %d dégâts !\n",
-		caster.Name, target.Name, damage)
+	ui.PrintInfo(fmt.Sprintf("%s utilise Coup de Poing sur %s et inflige %d dégâts !",
+		caster.Name, target.Name, damage))
 	return damage
 }
 
-// BouleDeFeu : sort qui consomme du mana
 func BouleDeFeu(caster *character.Character, target *Monster) int {
 	cost := 15
 	damage := 18
 
 	if !caster.ConsumeMP(cost) {
-		fmt.Printf("%s n'a pas assez de mana pour lancer Boule de Feu !\n", caster.Name)
+		ui.PrintError(fmt.Sprintf("%s n'a pas assez de mana pour lancer Boule de Feu !", caster.Name))
 		return 0
 	}
 
-	// Coup critique possible
 	if rand.Intn(100) < 15 {
 		damage *= 2
-		fmt.Println("💥 Coup critique magique !")
+		ui.PrintSuccess("💥 Coup critique magique !")
 	}
 
 	target.PvCurr -= damage
 	if target.PvCurr < 0 {
 		target.PvCurr = 0
 	}
-	fmt.Printf("%s lance Boule de Feu sur %s et inflige %d dégâts !\n",
-		caster.Name, target.Name, damage)
+	ui.PrintInfo(fmt.Sprintf("%s lance Boule de Feu sur %s et inflige %d dégâts !",
+		caster.Name, target.Name, damage))
 	return damage
 }
-
 // Soin : restaure des PV
 func Heal(caster *character.Character) {
 	cost := 10

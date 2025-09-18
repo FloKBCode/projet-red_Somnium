@@ -5,6 +5,8 @@ import (
 	"math/rand"
 	"time"
 	"somnium/character"
+	"somnium/ui"
+	"strings"
 )
 
 // État du combat
@@ -12,7 +14,8 @@ type CombatState struct {
 	Turn          int
 	PlayerAlive   bool
 	MonsterAlive  bool
-	ShieldTurns   int // tours restants de bouclier
+	ShieldTurns   int
+	PlayerFirst   bool
 }
 
 // ⚔️ Combat générique
@@ -54,9 +57,9 @@ func Fight(player *character.Character, monster *Monster, isTraining bool, isBos
 
 // 🎯 Tour du joueur
 func CharacterTurn(player *character.Character, monster *Monster, state *CombatState) bool {
-	fmt.Printf("\n⚔️ C'est votre tour, %s !\n", player.Name)
-	fmt.Printf("💖 PV : %d/%d | 🔮 Mana : %d/%d\n",
-		player.PvCurr, player.PvMax, player.ManaCurr, player.ManaMax)
+	ui.PrintInfo(fmt.Sprintf("\n⚔️ C'est votre tour, %s !", player.Name))
+	ui.PrintInfo(fmt.Sprintf("💖 PV : %d/%d | 🔮 Mana : %d/%d",
+		player.PvCurr, player.PvMax, player.ManaCurr, player.ManaMax))
 
 	fmt.Println("\n--- Menu de combat ---")
 	fmt.Println("1. Attaquer (Coup de poing)")
@@ -71,60 +74,23 @@ func CharacterTurn(player *character.Character, monster *Monster, state *CombatS
 	switch choice {
 	case 1:
 		CoupDePoing(player, monster)
-
 	case 2:
-		fmt.Println("\n--- Sorts disponibles ---")
-		fmt.Println("1. Boule de Feu (15 mana)")
-		fmt.Println("2. Soin (10 mana)")
-		fmt.Println("3. Bouclier (8 mana)")
-
-		var spellChoice int
-		fmt.Print("👉 Choix du sort : ")
-		fmt.Scanln(&spellChoice)
-
-		switch spellChoice {
-		case 1:
-			BouleDeFeu(player, monster)
-		case 2:
-			if ConsumeMana(player, "Soin") {
-				heal := 20
-				player.PvCurr += heal
-				if player.PvCurr > player.PvMax {
-					player.PvCurr = player.PvMax
-				}
-				fmt.Printf("💖 %s se soigne de %d PV (%d/%d)\n", player.Name, heal, player.PvCurr, player.PvMax)
-			} else {
-				fmt.Println("❌ Pas assez de mana !")
-			}
-		case 3:
-			if ConsumeMana(player, "Bouclier") {
-				state.ShieldTurns = 3
-				fmt.Printf("🛡️ %s active un bouclier pour 3 tours !\n", player.Name)
-			} else {
-				fmt.Println("❌ Pas assez de mana !")
-			}
-		default:
-			fmt.Println("❌ Sort invalide.")
-		}
-
+		handleSpellMenu(player, monster, state)
 	case 3:
 		if player.CountItem("Potion de vie") > 0 {
 			player.TakePot()
 		} else {
-			fmt.Println("❌ Aucune potion disponible !")
+			ui.PrintError("❌ Aucune potion disponible !")
 		}
-
 	case 4:
-		fmt.Println("💨 Vous fuyez le combat...")
+		ui.PrintInfo("💨 Vous fuyez le combat...")
 		return false
-
 	default:
-		fmt.Println("❌ Choix invalide, vous perdez votre tour !")
+		ui.PrintError("❌ Choix invalide, vous perdez votre tour !")
 	}
 
 	return !monster.IsDead()
 }
-
 // 👹 Attaque du monstre
 func monsterAttackPattern(monster *Monster, player *character.Character, state *CombatState) {
 	damage := monster.Attack
@@ -206,4 +172,60 @@ func StartFight(player *character.Character, monster Monster) error {
 // 👑 Combat de boss
 func StartBossFight(player *character.Character, boss Monster) bool {
 	return Fight(player, &boss, false, true)
+}
+
+func handleSpellMenu(player *character.Character, monster *Monster, state *CombatState) {
+	fmt.Println("\n--- Sorts disponibles ---")
+	fmt.Println("1. Boule de Feu (15 mana)")
+	fmt.Println("2. Soin (10 mana)")
+	fmt.Println("3. Bouclier (8 mana)")
+
+	var spellChoice int
+	fmt.Print("👉 Choix du sort : ")
+	fmt.Scanln(&spellChoice)
+
+	switch spellChoice {
+	case 1:
+		BouleDeFeu(player, monster)
+	case 2:
+		if ConsumeMana(player, "Soin") {
+			heal := 20
+			player.PvCurr += heal
+			if player.PvCurr > player.PvMax {
+				player.PvCurr = player.PvMax
+			}
+			ui.PrintSuccess(fmt.Sprintf("💖 %s se soigne de %d PV (%d/%d)", 
+				player.Name, heal, player.PvCurr, player.PvMax))
+		} else {
+			ui.PrintError("❌ Pas assez de mana !")
+		}
+	case 3:
+		if ConsumeMana(player, "Bouclier") {
+			state.ShieldTurns = 3
+			ui.PrintSuccess(fmt.Sprintf("🛡️ %s active un bouclier pour 3 tours !", player.Name))
+		} else {
+			ui.PrintError("❌ Pas assez de mana !")
+		}
+	default:
+		ui.PrintError("❌ Sort invalide.")
+	}
+}
+
+func DetermineFirstPlayer(player *character.Character, monster *Monster) bool {
+	fmt.Println("\n🎲 ═══ JET D'INITIATIVE ═══ 🎲")
+	
+	// Le joueur lance son initiative
+	player.RollInitiative()
+	fmt.Printf("🎲 %s obtient %d d'initiative !\n", monster.Name, monster.Initiative)
+	
+	playerWins := player.Initiative >= monster.Initiative
+	
+	if playerWins {
+		fmt.Printf("⚡ %s prend l'initiative ! Vous commencez.\n", player.Name)
+	} else {
+		fmt.Printf("⚡ %s est plus rapide ! Il commence.\n", monster.Name)
+	}
+	
+	fmt.Println(strings.Repeat("═", 40))
+	return playerWins
 }

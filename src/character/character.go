@@ -5,6 +5,12 @@ import (
 	"math"
 	"strings"
 	"time"
+	"somnium/ui"
+	"math/rand"
+)
+
+const (
+	GoblinXP = 25  // Récompense XP pour tuer un gobelin
 )
 
 type Character struct {
@@ -26,6 +32,7 @@ type Character struct {
 	XPUpgrades    int
 	CurrentLayer  int
 	IsShielded    bool
+	Initiative    int
 }
 
 type Equipment struct {
@@ -54,6 +61,7 @@ func InitCharacter(name, race, class string, pvMax, manaMax int) Character {
 		XPUpgrades:    0,
 		CurrentLayer:  1,
 		IsShielded:    false,
+		Initiative:    0,
 	}
 }
 
@@ -195,19 +203,19 @@ func (c *Character) TakePot() {
 
 // GainXP fait gagner de l'expérience au personnage
 func (c *Character) GainXP(amount int) {
-	fmt.Printf("✨ Vous gagnez %d points d'expérience !\n", amount)
+	ui.PrintSuccess(fmt.Sprintf("✨ Vous gagnez %d points d'expérience !", amount))
 	c.XPCurr += amount
 
-	// Vérifier si level up possible
 	for c.CheckLevelUp() {
 		c.LevelUp()
 	}
 }
 
-// CheckLevelUp vérifie si le personnage peut monter de niveau
+// CheckLevelUp vérifie si le personnage a assez d'XP pour monter de niveau
 func (c *Character) CheckLevelUp() bool {
 	return c.XPCurr >= c.XPMax
 }
+
 
 // LevelUp fait monter le personnage de niveau
 func (c *Character) LevelUp() {
@@ -261,9 +269,9 @@ func (c *Character) CalculateXPNeeded(level int) int {
 
 // DisplayXPInfo affiche les informations d'XP (utilitaire)
 func (c *Character) DisplayXPInfo() {
-	fmt.Printf("📊 Expérience : %d/%d (Niveau %d)\n", c.XPCurr, c.XPMax, c.Level)
+	nextLevelXP := c.CalculateXPNeeded(c.Level + 1)
+	fmt.Printf("📊 Expérience : %d/%d (Niveau %d)\n", c.XPCurr, nextLevelXP, c.Level)
 	if c.Level < 10 { // Limite arbitraire
-		nextLevelXP := c.CalculateXPNeeded(c.Level + 1)
 		remaining := nextLevelXP - c.XPCurr
 		fmt.Printf("   Prochain niveau dans : %d XP\n", remaining)
 	}
@@ -273,5 +281,26 @@ func (c *Character) GetName() string {
 	return c.Name
 }
 
+func (c *Character) RollInitiative() {
+	// Seed déjà fait dans monster.go
+	baseRoll := rand.Intn(20) + 1
+	c.Initiative = baseRoll
 
 
+// Bonus selon la classe
+	bonus := 0
+	switch c.Class {
+	case "Voleur":
+		bonus = 3  // Voleur = rapide
+	case "Mage":
+		bonus = 1  // Mage = réactif
+	case "Guerrier":
+		bonus = 0  // Guerrier = normal
+	case "Occultiste":
+		bonus = 2  // Occultiste = intuition
+	}
+	
+	c.Initiative = baseRoll + bonus
+	fmt.Printf("🎲 %s lance l'initiative : %d (base) + %d (classe) = %d\n", 
+		c.Name, baseRoll, bonus, c.Initiative)
+}

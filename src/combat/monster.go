@@ -3,6 +3,8 @@ package combat
 import (
 	"fmt"
 	"somnium/character"
+	"math/rand"
+	"time"
 )
 
 type Monster struct {
@@ -13,6 +15,7 @@ type Monster struct {
 	Attack int
 	Loot   []string
 	Phase  int
+	Initiative int
 }
 
 func InitGoblin() Monster {
@@ -23,6 +26,8 @@ func InitGoblin() Monster {
 		PvCurr: 30,
 		Attack: 5,
 		Loot:   []string{"Dague rouillée", "Morceau de cuir"},
+		Phase:  1,
+		Initiative: RollInitiative(),
 	}
 }
 func (m *Monster) AttackTarget(target *character.Character) {
@@ -40,6 +45,7 @@ func (m *Monster) DisplayInfo() {
 	fmt.Printf("Nom : %s (Niveau %d)\n", m.Name, m.Level)
 	fmt.Printf("Vie : %d/%d\n", m.PvCurr, m.PvMax)
 	fmt.Printf("Attaque : %d\n", m.Attack)
+	fmt.Printf("Initiative : %d\n", m.Initiative)
 
 	if len(m.Loot) > 0 {
 		fmt.Printf("Butin possible : %v\n", m.Loot)
@@ -80,4 +86,9 @@ func GenerateBoss(level int) Monster {
 	monster.Attack = int(float64(monster.Attack) * 1.5)
 	monster.Loot = append(monster.Loot, "Cristal de Trauma")
 	return monster
+}
+
+func RollInitiative() int {
+	rand.Seed(time.Now().UnixNano())
+	return rand.Intn(20) + 1 // Random 1-20
 }

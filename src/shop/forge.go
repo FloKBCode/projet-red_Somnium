@@ -43,7 +43,7 @@ func ForgeMenu(player *character.Character) {
 		fmt.Println(" 🔥 La Forge des Cauchemars 🔥 ")
 		fmt.Println("═══════════════════════════════")
 		fmt.Println("1. Contempler les artefacts forgés dans les flammes oniriques")
-		fmt.Println("2. Quitter ce lieu hanté")
+		fmt.Println("0. Quitter ce lieu hanté")
 		fmt.Print("→ Votre choix: ")
 
 		var choice int
@@ -62,7 +62,7 @@ func ForgeMenu(player *character.Character) {
 			} else if itemChoice != 0 {
 				ui.PrintError("❌ Les ombres ne comprennent pas ce choix...")
 			}
-		case 2:
+		case 0:
 			ui.PrintInfo("Vous quittez la forge, laissant derrière vous l’écho des marteaux.")
 			return
 		default:
