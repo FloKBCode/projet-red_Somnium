@@ -12,8 +12,14 @@ Assurez-vous d’avoir Go 1.21+ installé sur votre machine.
 ### Cloner le dépôt
 ```bash
 git clone https://github.com/FloKBCode/projet-red_Somnium.git
-cd src
+cd  projet-red_Somnium
 ```
+### Lancer le jeu
+```bash
+cd src
+go run .
+```
+
 ### 👥 Crédits
 Projet réalisé dans le cadre du Projet RED (Ymmersion).
 Développement : Florence, Sarah, Marly, (Ananya)
