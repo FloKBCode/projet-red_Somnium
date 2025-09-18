@@ -3,6 +3,7 @@ package combat
 import (
 	"fmt"
 	"somnium/character"
+	"somnium/ui"
 	"math/rand"
 	"time"
 )
@@ -25,7 +26,7 @@ func (m *Monster) AttackTarget(target *character.Character) {
 	if target.PvCurr < 0 {
 		target.PvCurr = 0
 	}
-	fmt.Printf("%s attaque %s et inflige %d dégâts !\n", m.Name, target.Name, m.Attack)
+	ui.PrintError(fmt.Sprintf("%s attaque %s et inflige %d dégâts !", m.Name, target.Name, m.Attack))
 }
 
 // Vérifie si le monstre est mort
@@ -35,27 +36,27 @@ func (m *Monster) IsDead() bool {
 
 // Affiche les informations du monstre
 func (m *Monster) DisplayInfo() {
-	fmt.Println("══════════════ MONSTRE ══════════════")
-	fmt.Printf("Nom : %s (Niveau %d)\n", m.Name, m.Level)
-	fmt.Printf("Vie : %d/%d\n", m.PvCurr, m.PvMax)
-	fmt.Printf("Attaque : %d\n", m.Attack)
-	fmt.Printf("Initiative : %d\n", m.Initiative)
+	ui.PrintError("══════════════ MONSTRE ══════════════")
+	ui.PrintError(fmt.Sprintf("Nom : %s (Niveau %d)", m.Name, m.Level))
+	ui.PrintError(fmt.Sprintf("Vie : %d/%d", m.PvCurr, m.PvMax))
+	ui.PrintError(fmt.Sprintf("Attaque : %d", m.Attack))
+	ui.PrintError(fmt.Sprintf("Initiative : %d", m.Initiative))
 
 	if len(m.Loot) > 0 {
-		fmt.Printf("Butin possible : %v\n", m.Loot)
+		ui.PrintInfo(fmt.Sprintf("Butin possible : %v", m.Loot))
 	} else {
-		fmt.Println("Ce monstre ne laisse rien derrière lui...")
+		ui.PrintInfo("Ce monstre ne laisse rien derrière lui...")
 	}
 	if m.IsDead() {
-		fmt.Println("⚰️  Ce monstre est mort.")
+		ui.PrintError("⚰️  Ce monstre est mort.")
 	}
-	fmt.Println("═════════════════════════════════════")
+	ui.PrintError("═════════════════════════════════════")
 }
 
-// GenerateDefaultMonster crée un nouveau monstre adapté au niveau
+// ✅ RENFORCÉ : GenerateDefaultMonster plus fort
 func GenerateDefaultMonster(level int, difficulty Difficulty) Monster {
-	baseHP := 30 + (level * 10)
-	baseAttack := 5 + (level * 2)
+	baseHP := 45 + (level * 20)    // ✅ AUGMENTÉ : 30→45 base, 10→20 par niveau
+	baseAttack := 8 + (level * 4)  // ✅ AUGMENTÉ : 5→8 base, 2→4 par niveau
 
 	monster := Monster{
 		Name:   "Démon Intérieur",
@@ -63,7 +64,7 @@ func GenerateDefaultMonster(level int, difficulty Difficulty) Monster {
 		PvMax:  baseHP,
 		PvCurr: baseHP,
 		Attack: baseAttack,
-		Loot:   []string{"Essence spirituelle", "Fragment d'âme"},
+		Loot:   []string{"Essence spirituelle", "Fragment d'âme", "Dague rouillée"},
 		Phase:  1,
 	}
 
@@ -71,93 +72,114 @@ func GenerateDefaultMonster(level int, difficulty Difficulty) Monster {
 	return monster
 }
 
-
 // RollInitiative génère un score d'initiative aléatoire
 func RollInitiative() int {
 	rand.Seed(time.Now().UnixNano())
 	return rand.Intn(20) + 1 // Random 1-20
 }
 
-// Initialisations de monstres spécifiques pour plus de variété
+// ✅ RENFORCÉ : Gobelins plus forts
 func InitWeakGoblin() Monster {
 	return Monster{
 		Name:       "Gobelin Craintif",
 		Level:      1,
-		PvMax:      20,
-		PvCurr:     20,
-		Attack:     3,
-		Loot:       []string{"Petit fragment", "Poussière d'espoir"},
+		PvMax:      35,     // ✅ AUGMENTÉ : 20→35
+		PvCurr:     35,
+		Attack:     6,      // ✅ AUGMENTÉ : 3→6
+		Loot:       []string{"Petit fragment", "Poussière d'espoir", "Dague rouillée"},
 		Phase:      1,
 		Initiative: RollInitiative(),
 	}
 }
 
-// InitStrongGoblin initialise un gobelin plus fort
 func InitStrongGoblin() Monster {
 	return Monster{
 		Name:       "Gobelin des Abysses",
 		Level:      3,
-		PvMax:      50,
-		PvCurr:     50,
-		Attack:     8,
-		Loot:       []string{"Fragment sombre", "Essence de peur"},
+		PvMax:      80,     // ✅ AUGMENTÉ : 50→80
+		PvCurr:     80,
+		Attack:     15,     // ✅ AUGMENTÉ : 8→15
+		Loot:       []string{"Fragment sombre", "Essence de peur", "Épée de fer"},
 		Phase:      1,
 		Initiative: RollInitiative(),
 	}
 }
 
-// InitNightmareSpider initialise une araignée
 func InitNightmareSpider() Monster {
 	return Monster{
 		Name:       "Araignée du Cauchemar",
 		Level:      2,
-		PvMax:      35,
-		PvCurr:     35,
-		Attack:     6,
-		Loot:       []string{"Soie empoisonnée", "Crocs veineux"},
+		PvMax:      55,     // ✅ AUGMENTÉ : 35→55
+		PvCurr:     55,
+		Attack:     12,     // ✅ AUGMENTÉ : 6→12
+		Loot:       []string{"Soie empoisonnée", "Crocs veineux", "Arc spectral"},
 		Phase:      1,
 		Initiative: RollInitiative(),
 	}
 }
 
-// InitShadowWraith initialise un spectre
 func InitShadowWraith() Monster {
 	return Monster{
 		Name:       "Spectre des Ombres",
 		Level:      4,
-		PvMax:      60,
-		PvCurr:     60,
-		Attack:     12,
-		Loot:       []string{"Essence spectrale", "Voile d'ombre"},
+		PvMax:      100,    // ✅ AUGMENTÉ : 60→100
+		PvCurr:     100,
+		Attack:     20,     // ✅ AUGMENTÉ : 12→20
+		Loot:       []string{"Essence spectrale", "Voile d'ombre", "Bâton magique"},
 		Phase:      1,
 		Initiative: RollInitiative(),
 	}
 }
 
-// InitMemoryPhantom initialise un fantôme des souvenirs
 func InitMemoryPhantom() Monster {
 	return Monster{
 		Name:       "Fantôme des Souvenirs",
 		Level:      3,
-		PvMax:      40,
-		PvCurr:     40,
-		Attack:     7,
-		Loot:       []string{"Fragment de mémoire", "Larme cristalline"},
+		PvMax:      70,     // ✅ AUGMENTÉ : 40→70
+		PvCurr:     70,
+		Attack:     14,     // ✅ AUGMENTÉ : 7→14
+		Loot:       []string{"Fragment de mémoire", "Larme cristalline", "Lame des cauchemars"},
 		Phase:      1,
 		Initiative: RollInitiative(),
 	}
 }
 
-// InitGoblin initialise un gobelin de base
 func InitGoblin() Monster {
 	return Monster{
 		Name:   "Gobelin",
 		Level:  1,
-		PvMax:  30,
-		PvCurr: 30,
-		Attack: 5,
-		Loot:   []string{"Dague rouillée", "Morceau de cuir"},
+		PvMax:  50,    // ✅ AUGMENTÉ : 30→50
+		PvCurr: 50,
+		Attack: 10,    // ✅ AUGMENTÉ : 5→10
+		Loot:   []string{"Dague rouillée", "Morceau de cuir", "Fragment d'âme"},
 		Phase:  1,
+		Initiative: RollInitiative(),
+	}
+}
+
+// ✅ NOUVEAU : Monstres de boss intermédiaires
+func InitMiniBoss() Monster {
+	return Monster{
+		Name:       "Gardien des Regrets",
+		Level:      5,
+		PvMax:      150,
+		PvCurr:     150,
+		Attack:     25,
+		Loot:       []string{"Sceptre du trauma", "Cristal de puissance", "Armure spectrale"},
+		Phase:      1,
+		Initiative: RollInitiative(),
+	}
+}
+
+func InitNightmareBeast() Monster {
+	return Monster{
+		Name:       "Bête du Cauchemar",
+		Level:      6,
+		PvMax:      200,
+		PvCurr:     200,
+		Attack:     30,
+		Loot:       []string{"Griffe de la peur", "Cœur de ténèbres", "Lame maudite"},
+		Phase:      1,
 		Initiative: RollInitiative(),
 	}
 }
@@ -171,6 +193,14 @@ func GenerateMonster(level int, difficulty Difficulty) Monster {
 		InitNightmareSpider,
 		InitShadowWraith,
 		InitMemoryPhantom,
+	}
+
+	// ✅ Ajouter mini-boss pour niveaux élevés
+	if level >= 4 {
+		monsters = append(monsters, InitMiniBoss)
+	}
+	if level >= 5 {
+		monsters = append(monsters, InitNightmareBeast)
 	}
 
 	// Choisir un monstre aléatoire selon le niveau
@@ -193,13 +223,14 @@ func GenerateMonster(level int, difficulty Difficulty) Monster {
 	AdjustMonsterStats(&selectedMonster, difficulty)
 	return selectedMonster
 }
-// GenerateBoss crée un boss puissant
+
+// ✅ RENFORCÉ : GenerateBoss encore plus puissant
 func GenerateBoss(level int) Monster {
-	monster := GenerateDefaultMonster(level+2, Hard)
+	monster := GenerateDefaultMonster(level+3, Hard) // ✅ +3 niveaux au lieu de +2
 	monster.Name = "Trauma Primordial"
-	monster.PvMax *= 2
+	monster.PvMax *= 3    // ✅ x3 au lieu de x2
 	monster.PvCurr = monster.PvMax
-	monster.Attack = int(float64(monster.Attack) * 1.5)
-	monster.Loot = append(monster.Loot, "Cristal de Trauma")
+	monster.Attack = int(float64(monster.Attack) * 2.0) // ✅ x2 au lieu de x1.5
+	monster.Loot = append(monster.Loot, "Cristal de Trauma", "Couronne de la Libération")
 	return monster
 }

@@ -15,20 +15,29 @@ type Spell struct {
 	Effect   string
 }
 
-
-// CoupDePoing : attaque de base gratuite
+// ✅ AMÉLIORÉ : CoupDePoing avec dégâts d'arme
 func CoupDePoing(caster *character.Character, target *Monster) int {
-	damage := 8
+	damage := caster.GetAttackDamage() // ✅ Utilise les dégâts avec arme
+	
 	if rand.Intn(100) < 15 {
 		damage *= 2
 		ui.PrintSuccess("💥 Coup critique !")
 	}
+	
 	target.PvCurr -= damage
 	if target.PvCurr < 0 {
 		target.PvCurr = 0
 	}
-	ui.PrintInfo(fmt.Sprintf("%s utilise Coup de Poing sur %s et inflige %d dégâts !",
-		caster.Name, target.Name, damage))
+	
+	// Message personnalisé selon l'arme
+	if caster.Weapon.Name != "" {
+		ui.PrintInfo(fmt.Sprintf("%s attaque avec %s et inflige %d dégâts !",
+			caster.Name, caster.Weapon.Name, damage))
+	} else {
+		ui.PrintInfo(fmt.Sprintf("%s utilise Coup de Poing et inflige %d dégâts !",
+			caster.Name, damage))
+	}
+	
 	return damage
 }
 
@@ -55,13 +64,14 @@ func BouleDeFeu(caster *character.Character, target *Monster) int {
 		caster.Name, target.Name, damage))
 	return damage
 }
+
 // Soin : restaure des PV
 func Heal(caster *character.Character) {
 	cost := 10
 	heal := 20
 
 	if !caster.ConsumeMP(cost) {
-		fmt.Printf("%s n'a pas assez de mana pour se soigner !\n", caster.Name)
+		ui.PrintError(fmt.Sprintf("%s n'a pas assez de mana pour se soigner !", caster.Name))
 		return
 	}
 
@@ -69,19 +79,19 @@ func Heal(caster *character.Character) {
 	if caster.PvCurr > caster.PvMax {
 		caster.PvCurr = caster.PvMax
 	}
-	fmt.Printf("✨ %s se soigne et regagne %d PV (%d/%d)!\n",
-		caster.Name, heal, caster.PvCurr, caster.PvMax)
+	ui.PrintSuccess(fmt.Sprintf("✨ %s se soigne et regagne %d PV (%d/%d)!",
+		caster.Name, heal, caster.PvCurr, caster.PvMax))
 }
 
 // Bouclier : réduit les dégâts subis pendant 1 tour
 func Shield(caster *character.Character) {
 	cost := 8
 	if !caster.ConsumeMP(cost) {
-		fmt.Printf("%s n'a pas assez de mana pour activer Bouclier !\n", caster.Name)
+		ui.PrintError(fmt.Sprintf("%s n'a pas assez de mana pour activer Bouclier !", caster.Name))
 		return
 	}
 	caster.IsShielded = true
-	fmt.Printf("🛡️ %s se protège avec un bouclier magique pour ce tour !\n", caster.Name)
+	ui.PrintSuccess(fmt.Sprintf("🛡️ %s se protège avec un bouclier magique pour ce tour !", caster.Name))
 }
 
 // 🔋 Restaurer du mana
@@ -90,7 +100,7 @@ func RestoreMana(c *character.Character, amount int) {
 	if c.ManaCurr > c.ManaMax {
 		c.ManaCurr = c.ManaMax
 	}
-	fmt.Printf("🔮 %s regagne %d mana ! (%d/%d)\n", c.Name, amount, c.ManaCurr, c.ManaMax)
+	ui.PrintSuccess(fmt.Sprintf("🔮 %s regagne %d mana ! (%d/%d)", c.Name, amount, c.ManaCurr, c.ManaMax))
 }
 
 // Consomme le mana pour un sort, retourne vrai si réussi
@@ -108,8 +118,7 @@ func ManaCost(c *character.Character, spellName string) int {
 	if cost, ok := SpellCosts[spellName]; ok {
 		return cost
 	}
-	return 0 // Sort inconnu 
-	// → pas de coût
+	return 0 // Sort inconnu → pas de coût
 }
 
 // Chaîne d'éclairs : attaque électrique avec chance de critique
@@ -148,7 +157,8 @@ func MurDeGlace(caster *character.Character) {
 	caster.IsShielded = true // Réutilise le système existant mais avec effet renforcé
 	ui.PrintSuccess(fmt.Sprintf("🧊 %s érige un mur de glace protecteur !", caster.Name))
 }
- // Soin ++
+
+// Soin ++
 func SoinMajeur(caster *character.Character) {
 	cost := 25
 	heal := 40
@@ -217,7 +227,7 @@ func ExplosionPsychique(caster *character.Character, target *Monster) int {
 	return damage
 }
 
- // Menu des sorts
+// Menu des sorts
 func SpellMenu(player *character.Character, monster *Monster, state *CombatState) {
 	availableSpells := getAvailableSpells(player)
 	
@@ -226,18 +236,18 @@ func SpellMenu(player *character.Character, monster *Monster, state *CombatState
 		return
 	}
 
-	fmt.Println("\n--- Sorts disponibles ---")
+	ui.PrintInfo("\n--- Sorts disponibles ---")
 	for i, spell := range availableSpells {
 		cost := SpellCosts[spell]
 		manaStatus := "✅"
 		if player.ManaCurr < cost {
 			manaStatus = "❌"
 		}
-		fmt.Printf("%d. %s (%d mana) %s\n", i+1, spell, cost, manaStatus)
+		ui.PrintInfo(fmt.Sprintf("%d. %s (%d mana) %s", i+1, spell, cost, manaStatus))
 	}
 
 	var spellChoice int
-	fmt.Print("👉 Choix du sort : ")
+	ui.PrintInfo("👉 Choix du sort : ")
 	fmt.Scanln(&spellChoice)
 
 	if spellChoice < 1 || spellChoice > len(availableSpells) {
@@ -248,7 +258,7 @@ func SpellMenu(player *character.Character, monster *Monster, state *CombatState
 	selectedSpell := availableSpells[spellChoice-1]
 	castSpell(player, monster, selectedSpell, state)
 }
- //
+
 func getAvailableSpells(player *character.Character) []string {
 	var available []string
 	for _, skill := range player.Skills {
@@ -259,7 +269,6 @@ func getAvailableSpells(player *character.Character) []string {
 	return available
 }
 
-//
 func castSpell(player *character.Character, monster *Monster, spellName string, state *CombatState) {
 	switch spellName {
 	case "Boule de feu":
@@ -294,7 +303,6 @@ func castSpell(player *character.Character, monster *Monster, spellName string, 
 	}
 }
 
-//
 var SpellCosts = map[string]int{
 	"Coup de poing":      0,   
 	"Boule de feu":       15,

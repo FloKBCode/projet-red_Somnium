@@ -113,14 +113,14 @@ func CharacterTurnNew(player *character.Character, monster *Monster, state *Comb
 		player.PvCurr, player.PvMax, player.ManaCurr, player.ManaMax))
 	ui.PrintInfo(fmt.Sprintf("👹 %s : %d/%d PV", monster.Name, monster.PvCurr, monster.PvMax))
 
-	fmt.Println("\n--- Menu de combat ---")
-	fmt.Println("1. Attaquer (Coup de poing)")
-	fmt.Println("2. Sorts")
-	fmt.Println("3. Inventaire")
-	fmt.Println("4. Fuir")
+	ui.PrintInfo("\n--- Menu de combat ---")
+	ui.PrintInfo("1. Attaquer (Coup de poing)")
+	ui.PrintInfo("2. Sorts")
+	ui.PrintInfo("3. Inventaire")
+	ui.PrintInfo("4. Fuir")
 
 	var choice int
-	fmt.Print("👉 Votre choix : ")
+	ui.PrintInfo("👉 Votre choix : ")
 	fmt.Scanln(&choice)
 
 	switch choice {
@@ -155,21 +155,21 @@ func CharacterTurnNew(player *character.Character, monster *Monster, state *Comb
 	}
 }
 
-// Attaque du monstre
+// ✅ AMÉLIORÉ : Attaque du monstre plus forte
 func monsterAttackPattern(monster *Monster, player *character.Character, state *CombatState) {
 	damage := monster.Attack
 
-	// Attaque spéciale tous les 3 tours
-	if state.Turn%3 == 0 {
-		damage = int(float64(damage) * 1.5)
-		fmt.Printf("⚡ %s concentre ses forces !\n", monster.Name)
+	// ✅ RENFORCÉ : Attaques spéciales plus fréquentes et plus fortes
+	if state.Turn%2 == 0 { // Attaque spéciale tous les 2 tours au lieu de 3
+		damage = int(float64(damage) * 1.8) // 80% bonus au lieu de 50%
+		ui.PrintError(fmt.Sprintf("⚡ %s concentre toute sa rage !", monster.Name))
 	}
 
 	// Réduction par bouclier
 	if state.ShieldTurns > 0 {
 		damage /= 2
 		state.ShieldTurns--
-		fmt.Println("🛡️ Bouclier réduit les dégâts de moitié !")
+		ui.PrintInfo("🛡️ Bouclier réduit les dégâts de moitié !")
 	}
 
 	player.PvCurr -= damage
@@ -177,7 +177,7 @@ func monsterAttackPattern(monster *Monster, player *character.Character, state *
 		player.PvCurr = 0
 	}
 
-	ui.PrintError(fmt.Sprintf("👹 %s attaque %s et inflige %d dégâts ! (%d/%d PV restants)\n",
+	ui.PrintError(fmt.Sprintf("👹 %s attaque %s et inflige %d dégâts ! (%d/%d PV restants)",
 		monster.Name, player.Name, damage, player.PvCurr, player.PvMax))
 }
 
@@ -185,26 +185,54 @@ func monsterAttackPattern(monster *Monster, player *character.Character, state *
 func handleVictory(player *character.Character, monster *Monster, isTraining bool, isBoss bool) {
 	ui.PrintSuccess(fmt.Sprintf("🎉 Vous avez vaincu %s !", monster.Name))
 
+	// ✅ NOUVEAU : Débloquer succès première victoire
+	if !isTraining {
+		player.UnlockAchievement("first_victory")
+	}
+
 	if !isTraining {
 		// ✅ AJOUTER : Mise à jour des quêtes
 		quest.UpdateQuestProgress("kill", monster.Name, 1)
 
 		// XP et loot
-		xpGain := 25 + (monster.Level * 10)
+		xpGain := 35 + (monster.Level * 15) // ✅ RENFORCÉ : Plus d'XP
 		if isBoss {
-			xpGain *= 2
+			xpGain *= 3 // ✅ RENFORCÉ : Boss donne 3x XP au lieu de 2x
+			player.UnlockAchievement("boss_slayer")
 		}
 		player.GainXP(xpGain)
 
-		// Loot
+		// Loot amélioré
 		if len(monster.Loot) > 0 {
-			loot := monster.Loot[0]
-			player.AddToInventory(loot)
-			ui.PrintSuccess(fmt.Sprintf("🎁 Vous trouvez : %s", loot))
+			// ✅ CORRIGÉ : Loot aléatoire plus intéressant
+			lootIndex := rand.Intn(len(monster.Loot))
+			loot := monster.Loot[lootIndex]
+			
+			if player.AddToInventory(loot) {
+				ui.PrintSuccess(fmt.Sprintf("🎁 Vous trouvez : %s", loot))
+				
+				// ✅ AMÉLIORATION : Si c'est une arme, proposer de l'équiper
+				if weapon, isWeapon := character.Weapons[loot]; isWeapon {
+					ui.PrintInfo(fmt.Sprintf("⚔️ %s est une arme ! (+%d dégâts)", loot, weapon.Damage))
+					ui.PrintInfo("Voulez-vous l'équiper maintenant ? (o/n)")
+					var equipChoice string
+					fmt.Scanln(&equipChoice)
+					if strings.ToLower(equipChoice) == "o" || strings.ToLower(equipChoice) == "oui" {
+						player.EquipWeapon(loot)
+					}
+				}
 
-			// ✅ AJOUTER : Mise à jour quête collect
-			quest.UpdateQuestProgress("collect", loot, 1)
+				// ✅ AJOUTER : Mise à jour quête collect
+				quest.UpdateQuestProgress("collect", loot, 1)
+			} else {
+				ui.PrintError("🎒 Inventaire plein ! Objet perdu...")
+			}
 		}
+
+		// ✅ AMÉLIORATION : Chance d'or bonus
+		bonusGold := 10 + rand.Intn(monster.Level * 5)
+		player.Money += bonusGold
+		ui.PrintInfo(fmt.Sprintf("💰 Vous trouvez aussi %d fragments !", bonusGold))
 	} else {
 		player.GainXP(25)
 		if player.IsDead() {
@@ -215,17 +243,17 @@ func handleVictory(player *character.Character, monster *Monster, isTraining boo
 
 // Défaite
 func handleDefeat(player *character.Character, monster *Monster, isTraining bool) {
-	fmt.Printf("💀 Vous avez été vaincu par %s...\n", monster.Name)
+	ui.PrintError(fmt.Sprintf("💀 Vous avez été vaincu par %s...", monster.Name))
 	if isTraining {
 		player.Resurrect()
-		fmt.Println("✨ Vous revenez à la vie pour continuer l'entraînement.")
+		ui.PrintSuccess("✨ Vous revenez à la vie pour continuer l'entraînement.")
 	} else {
 		player.Resurrect()
-		fmt.Println("✨ Vous êtes soigné mais perdez votre progression.")
+		ui.PrintError("✨ Vous êtes soigné mais perdez votre progression.")
 	}
 }
 
-// 🎓 Combat d’entraînement
+// 🎓 Combat d'entraînement
 func TrainingFight(player *character.Character) {
 	goblin := InitGoblin()
 	Fight(player, &goblin, true, false)
@@ -247,18 +275,22 @@ func StartBossFight(player *character.Character, boss Monster) bool {
 
 // Gestion du menu des sorts
 func handleSpellMenu(player *character.Character, monster *Monster, state *CombatState) {
-	fmt.Println("\n--- Sorts disponibles ---")
-	fmt.Println("1. Boule de Feu (15 mana)")
-	fmt.Println("2. Soin (10 mana)")
-	fmt.Println("3. Bouclier (8 mana)")
+	ui.PrintInfo("\n--- Sorts disponibles ---")
+	ui.PrintInfo("1. Boule de Feu (15 mana)")
+	ui.PrintInfo("2. Soin (10 mana)")
+	ui.PrintInfo("3. Bouclier (8 mana)")
 
 	var spellChoice int
-	fmt.Print("👉 Choix du sort : ")
+	ui.PrintInfo("👉 Choix du sort : ")
 	fmt.Scanln(&spellChoice)
 
 	switch spellChoice {
 	case 1:
-		BouleDeFeu(player, monster)
+		if player.CanCastSpell("Boule de feu") {
+			BouleDeFeu(player, monster)
+		} else {
+			ui.PrintError("❌ Vous ne connaissez pas ce sort !")
+		}
 	case 2:
 		if ConsumeMana(player, "Soin") {
 			heal := 20
@@ -285,21 +317,22 @@ func handleSpellMenu(player *character.Character, monster *Monster, state *Comba
 
 //	Détermine qui commence
 func DetermineFirstPlayer(player *character.Character, monster *Monster) bool {
-	fmt.Println("\n🎲 ═══ JET D'INITIATIVE ═══ 🎲")
+	ui.ClearScreen(player)
+	ui.PrintInfo("\n🎲 ═══ JET D'INITIATIVE ═══ 🎲")
 
 	// Le joueur lance son initiative
 	player.RollInitiative()
-	fmt.Printf("🎲 %s obtient %d d'initiative !\n", monster.Name, monster.Initiative)
+	ui.PrintInfo(fmt.Sprintf("🎲 %s obtient %d d'initiative !", monster.Name, monster.Initiative))
 
 	playerWins := player.Initiative >= monster.Initiative
 
 	if playerWins {
-		fmt.Printf("⚡ %s prend l'initiative ! Vous commencez.\n", player.Name)
+		ui.PrintSuccess(fmt.Sprintf("⚡ %s prend l'initiative ! Vous commencez.", player.Name))
 	} else {
-		fmt.Printf("⚡ %s est plus rapide ! Il commence.\n", monster.Name)
+		ui.PrintError(fmt.Sprintf("⚡ %s est plus rapide ! Il commence.", monster.Name))
 	}
 
-	fmt.Println(strings.Repeat("═", 40))
+	ui.PrintInfo(strings.Repeat("═", 40))
 	return playerWins
 }
 
