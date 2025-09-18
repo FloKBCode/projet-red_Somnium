@@ -8,7 +8,6 @@ import (
 	"somnium/combat"
 	"somnium/ui"
 	"time"
-	"somnium/quest"
 )
 
 const (
@@ -152,6 +151,26 @@ func ExploreLayer(player *character.Character) error {
 
 	layer := Layers[currentLayerIndex]
 
+	// ✅ NOUVELLE NARRATIVE IMMERSIVE PAR COUCHE
+	displayLayerNarrative(layer, player)
+
+	// ✅ INTÉGRER LE SYSTÈME DE SALLES
+	fmt.Println("\nComment voulez-vous explorer cette couche ?")
+	fmt.Println("1. Explorer une salle aléatoire (Système de salles avancé)")
+	fmt.Println("2. Faire un choix de progression (Système classique)")
+	
+	var explorationChoice int
+	fmt.Print("👉 Votre choix (1-2): ")
+	fmt.Scanln(&explorationChoice)
+	
+	if explorationChoice == 1 {
+		// Utiliser le nouveau système de salles
+		room := GenerateRoom(player.CurrentLayer, player)
+		ui.PrintInfo(fmt.Sprintf("\n🚪 Vous pénétrez dans : %s", room.Name))
+		return ExploreRoom(room, player)
+	}
+
+	// Système classique (existant)
 	ui.PrintInfo(fmt.Sprintf("\n🌀 === %s ===", layer.Name))
 	ui.PrintInfo(layer.Description)
 	ui.PrintInfo(fmt.Sprintf("Couche actuelle : %d/%d", player.CurrentLayer, MaxLayer))
@@ -197,11 +216,9 @@ func ExploreLayer(player *character.Character) error {
 		}
 	}
 
-	// Mettre à jour les quêtes
-	quest.UpdateQuestProgress("explore", layer.Name, 1)
-
 	return nil
 }
+
 
 func handleCombat(player *character.Character, choice LayerChoice) error {
 	if err := generateCombatForRisk(player, choice.Risk); err != nil {
@@ -332,4 +349,42 @@ func GenerateLoot(layer Layer) Material {
 	}
 	rand.Seed(time.Now().UnixNano())
 	return possible[rand.Intn(len(possible))]
+}
+
+func displayLayerNarrative(layer Layer, player *character.Character) {
+	ui.PrintInfo(fmt.Sprintf("\n🌀 === %s ===", layer.Name))
+	
+	// Récits spécifiques par couche
+	switch layer.Level {
+	case 1:
+		ui.PrintInfo("🌫️ Les brumes de la surface ondulent autour de vous...")
+		time.Sleep(1 * time.Second)
+		ui.PrintInfo("Ici flottent vos souvenirs les plus récents, encore flous et malléables.")
+		time.Sleep(1 * time.Second)
+		ui.PrintInfo("Vous entendez l'écho lointain de votre voix consciente qui vous appelle...")
+		
+	case 2:
+		ui.PrintError("🥀 L'air devient plus lourd, chargé de remords...")
+		time.Sleep(1 * time.Second)
+		ui.PrintInfo("Dans cette vallée résonnent tous vos 'si seulement' et vos 'j'aurais dû'.")
+		time.Sleep(1 * time.Second)
+		ui.PrintInfo("Les ombres ici ont la forme de vos choix passés.")
+		
+	case 3:
+		ui.PrintError("🕳️ Un froid glacial remonte de l'abîme sous vos pieds...")
+		time.Sleep(1 * time.Second)
+		ui.PrintInfo("Vous êtes maintenant face aux terreurs qui ont façonné votre personnalité.")
+		time.Sleep(1 * time.Second)
+		ui.PrintError("Chaque pas résonne comme un battement de cœur affolé.")
+		
+	case 4:
+		ui.PrintError("💀 L'atmosphère devient suffocante, presque tangible...")
+		time.Sleep(1 * time.Second)
+		ui.PrintError("Vous approchez du noyau de votre souffrance originelle.")
+		time.Sleep(1 * time.Second)
+		ui.PrintError("Ici, seuls les plus braves peuvent espérer triompher.")
+	}
+	
+	time.Sleep(1500 * time.Millisecond)
+	ui.PrintInfo(layer.Description)
 }

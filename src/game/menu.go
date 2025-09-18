@@ -7,6 +7,7 @@ import (
 	"somnium/shop"
 	"somnium/ui"
 	"time"
+	"somnium/quest"
 )
 
 func MainMenu() {
@@ -79,6 +80,7 @@ func MainMenu() {
 			ui.PressEnterToContinue(&player)
 			ui.ClearScreen(&player)
 			combat.TrainingFight(&player)
+			ui.PressEnterToContinue(&player)
 		case 7:
 			ui.PrintInfo("\n🌀 Exploration d'une couche du Labyrinthe...")
 			ui.PressEnterToContinue(&player)
@@ -88,7 +90,7 @@ func MainMenu() {
 			ui.PressEnterToContinue(&player)
 		case 6:
 			ui.PrintInfo("\n📜 Quêtes disponibles :")
-			ui.PrintInfo("🚧 Fonctionnalité en cours de développement...")
+			quest.ShowQuestMenu(&player)
 			ui.PressEnterToContinue(&player)
 		case 8:
 			ui.PrintInfo("\n💾 Sauvegarde de la partie...")

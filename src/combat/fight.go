@@ -3,20 +3,28 @@ package combat
 import (
 	"fmt"
 	"math/rand"
-	"time"
 	"somnium/character"
+	"somnium/quest"
 	"somnium/ui"
 	"strings"
-	"somnium/quest"
+	"time"
 )
 
-// État du combat
+type TurnResult int
+
+const (
+	TurnContinue TurnResult = iota
+	TurnVictory
+	TurnFlee
+	TurnDefeat
+)
+
 type CombatState struct {
-	Turn          int
-	PlayerAlive   bool
-	MonsterAlive  bool
-	ShieldTurns   int
-	PlayerFirst   bool
+	Turn         int
+	PlayerAlive  bool
+	MonsterAlive bool
+	ShieldTurns  int
+	PlayerFirst  bool
 }
 
 // ⚔️ Combat générique
@@ -26,32 +34,67 @@ func Fight(player *character.Character, monster *Monster, isTraining bool, isBos
 	playerFirst := DetermineFirstPlayer(player, monster)
 
 	state := CombatState{
-		Turn:          1,
-		PlayerAlive:   true,
-		MonsterAlive:  true,
-		ShieldTurns:   0,
-		PlayerFirst:   playerFirst,
+		Turn:         1,
+		PlayerAlive:  true,
+		MonsterAlive: true,
+		ShieldTurns:  0,
+		PlayerFirst:  playerFirst,
 	}
 
 	ui.PrintInfo(fmt.Sprintf("\n⚔️ %s apparaît ! (%d/%d PV)", monster.Name, monster.PvCurr, monster.PvMax))
 	monster.DisplayInfo()
 
 	for state.PlayerAlive && state.MonsterAlive {
-		fmt.Printf("\n=== Tour %d ===\n", state.Turn)
+		ui.PrintInfo(fmt.Sprintf("\n=== Tour %d ===", state.Turn))
 
-		// Tour du joueur
-		state.MonsterAlive = CharacterTurn(player, monster, &state)
-		if !state.MonsterAlive {
-			handleVictory(player, monster, isTraining, isBoss)
-			return true
-		}
+		var result TurnResult
 
-		// Tour du monstre
-		monsterAttackPattern(monster, player, &state)
-		if player.IsDead() {
-			state.PlayerAlive = false
-			handleDefeat(player, monster, isTraining)
-			return false
+		if state.PlayerFirst {
+			// Joueur commence
+			result = CharacterTurnNew(player, monster, &state)
+
+			switch result {
+			case TurnVictory:
+				handleVictory(player, monster, isTraining, isBoss)
+				return true
+			case TurnFlee:
+				handleFlee(player, monster)
+				return false // ✅ FUITE = ÉCHEC, pas victoire
+			case TurnDefeat:
+				handleDefeat(player, monster, isTraining)
+				return false
+			}
+
+			// Tour du monstre si combat continue
+			if result == TurnContinue {
+				monsterAttackPattern(monster, player, &state)
+				if player.IsDead() {
+					handleDefeat(player, monster, isTraining)
+					return false
+				}
+			}
+		} else {
+			// Monstre commence
+			monsterAttackPattern(monster, player, &state)
+			if player.IsDead() {
+				handleDefeat(player, monster, isTraining)
+				return false
+			}
+
+			// Tour du joueur
+			result = CharacterTurnNew(player, monster, &state)
+
+			switch result {
+			case TurnVictory:
+				handleVictory(player, monster, isTraining, isBoss)
+				return true
+			case TurnFlee:
+				handleFlee(player, monster)
+				return false // ✅ FUITE = ÉCHEC
+			case TurnDefeat:
+				handleDefeat(player, monster, isTraining)
+				return false
+			}
 		}
 
 		state.Turn++
@@ -61,10 +104,11 @@ func Fight(player *character.Character, monster *Monster, isTraining bool, isBos
 }
 
 // 🎯 Tour du joueur
-func CharacterTurn(player *character.Character, monster *Monster, state *CombatState) bool {
+func CharacterTurnNew(player *character.Character, monster *Monster, state *CombatState) TurnResult {
 	ui.PrintInfo(fmt.Sprintf("\n⚔️ C'est votre tour, %s !", player.Name))
-	ui.PrintInfo(fmt.Sprintf("💖 PV : %d/%d | 🔮 Mana : %d/%d",
+	ui.PrintInfo(fmt.Sprintf("💖 Vos PV : %d/%d | 🔮 Mana : %d/%d",
 		player.PvCurr, player.PvMax, player.ManaCurr, player.ManaMax))
+	ui.PrintInfo(fmt.Sprintf("👹 %s : %d/%d PV", monster.Name, monster.PvCurr, monster.PvMax))
 
 	fmt.Println("\n--- Menu de combat ---")
 	fmt.Println("1. Attaquer (Coup de poing)")
@@ -83,42 +127,29 @@ func CharacterTurn(player *character.Character, monster *Monster, state *CombatS
 		handleSpellMenu(player, monster, state)
 	case 3:
 		character.AccessInventory(player)
-    var invChoice int
-    fmt.Scanln(&invChoice)
-    if invChoice < 1 || invChoice > len(player.Inventory) {
-        ui.PrintError("❌ Choix invalide")
-        break
-    }
-    item := player.Inventory[invChoice-1]
-
-    // Vérification PV / Mana
-    switch item {
-    case "Potion de vie":
-        if player.PvCurr >= player.PvMax {
-            ui.PrintError("💖 Vos PV sont déjà au maximum !")
-            break
-        }
-    case "Potion de mana":
-        if player.ManaCurr >= player.ManaMax {
-            ui.PrintError("🔮 Votre mana est déjà au maximum !")
-            break
-        }
-    }
-
-    player.UseItem(item)
+		var invChoice int
+		fmt.Scanln(&invChoice)
+		if invChoice < 1 || invChoice > len(player.Inventory) {
+			ui.PrintError("❌ Choix invalide")
+			break
+		}
 	case 4:
-		ui.PrintInfo("💨 Vous fuyez le combat...")
-		return false
+		// ✅ FUITE CORRECTE
+		ui.PrintInfo("💨 Vous tentez de fuir le combat...")
+		return TurnFlee // ✅ Retourner FUITE, pas false
 	default:
 		ui.PrintError("❌ Choix invalide, vous perdez votre tour !")
-	}
-if monster.PvCurr > 0 {
-		ui.PrintInfo(fmt.Sprintf("👹 %s : %d/%d PV restants", monster.Name, monster.PvCurr, monster.PvMax))
-	} else {
-		ui.PrintSuccess(fmt.Sprintf("💀 %s est vaincu !", monster.Name))
+		return TurnContinue
 	}
 
-	return !monster.IsDead()
+	// Vérifier l'état du monstre après l'action
+	if monster.IsDead() {
+		ui.PrintSuccess(fmt.Sprintf("💀 %s est vaincu !", monster.Name))
+		return TurnVictory
+	} else {
+		ui.PrintInfo(fmt.Sprintf("👹 %s : %d/%d PV restants", monster.Name, monster.PvCurr, monster.PvMax))
+		return TurnContinue
+	}
 }
 
 // 👹 Attaque du monstre
@@ -143,8 +174,8 @@ func monsterAttackPattern(monster *Monster, player *character.Character, state *
 		player.PvCurr = 0
 	}
 
-	fmt.Printf("👹 %s attaque %s et inflige %d dégâts ! (%d/%d PV restants)\n",
-		monster.Name, player.Name, damage, player.PvCurr, player.PvMax)
+	ui.PrintError(fmt.Sprintf("👹 %s attaque %s et inflige %d dégâts ! (%d/%d PV restants)\n",
+		monster.Name, player.Name, damage, player.PvCurr, player.PvMax))
 }
 
 // 🎉 Victoire
@@ -154,7 +185,7 @@ func handleVictory(player *character.Character, monster *Monster, isTraining boo
 	if !isTraining {
 		// ✅ AJOUTER : Mise à jour des quêtes
 		quest.UpdateQuestProgress("kill", monster.Name, 1)
-		
+
 		// XP et loot
 		xpGain := 25 + (monster.Level * 10)
 		if isBoss {
@@ -167,7 +198,7 @@ func handleVictory(player *character.Character, monster *Monster, isTraining boo
 			loot := monster.Loot[0]
 			player.AddToInventory(loot)
 			ui.PrintSuccess(fmt.Sprintf("🎁 Vous trouvez : %s", loot))
-			
+
 			// ✅ AJOUTER : Mise à jour quête collect
 			quest.UpdateQuestProgress("collect", loot, 1)
 		}
@@ -231,7 +262,7 @@ func handleSpellMenu(player *character.Character, monster *Monster, state *Comba
 			if player.PvCurr > player.PvMax {
 				player.PvCurr = player.PvMax
 			}
-			ui.PrintSuccess(fmt.Sprintf("💖 %s se soigne de %d PV (%d/%d)", 
+			ui.PrintSuccess(fmt.Sprintf("💖 %s se soigne de %d PV (%d/%d)",
 				player.Name, heal, player.PvCurr, player.PvMax))
 		} else {
 			ui.PrintError("❌ Pas assez de mana !")
@@ -250,19 +281,30 @@ func handleSpellMenu(player *character.Character, monster *Monster, state *Comba
 
 func DetermineFirstPlayer(player *character.Character, monster *Monster) bool {
 	fmt.Println("\n🎲 ═══ JET D'INITIATIVE ═══ 🎲")
-	
+
 	// Le joueur lance son initiative
 	player.RollInitiative()
 	fmt.Printf("🎲 %s obtient %d d'initiative !\n", monster.Name, monster.Initiative)
-	
+
 	playerWins := player.Initiative >= monster.Initiative
-	
+
 	if playerWins {
 		fmt.Printf("⚡ %s prend l'initiative ! Vous commencez.\n", player.Name)
 	} else {
 		fmt.Printf("⚡ %s est plus rapide ! Il commence.\n", monster.Name)
 	}
-	
+
 	fmt.Println(strings.Repeat("═", 40))
 	return playerWins
+}
+
+func handleFlee(player *character.Character, monster *Monster) {
+	ui.PrintInfo(fmt.Sprintf("💨 Vous fuyez devant %s !", monster.Name))
+	ui.PrintInfo("Vous retournez au menu principal sans récompense.")
+
+	// Optionnel : petite pénalité pour la fuite
+	if player.PvCurr > 10 {
+		player.PvCurr -= 10
+		ui.PrintError("💔 La fuite vous coûte 10 PV (stress)")
+	}
 }

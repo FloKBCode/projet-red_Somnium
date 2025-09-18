@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"somnium/ui"
 	"strings"
+	"time"
 )
 
 // validateName vérifie que le nom contient uniquement des lettres (y compris accentuées).
@@ -147,12 +148,53 @@ func CharacterCreation() Character {
 	maxHP, maxMana := getBaseStats(race, class)
 
 	hero := InitCharacter(name, race, class, maxHP, maxMana)
+	
 
-	// Message immersif
-	fmt.Printf("\n✨ %s... ton reflet prend forme : %s %s.\n", hero.Name, hero.Race, hero.Class)
-	fmt.Printf("💖 Vitalité : %d | 🔮 Essence : %d\n", hero.PvMax, hero.ManaMax)
-	fmt.Println("Ton voyage commence dans les profondeurs de Somnium...")
-	ui.PrintError("Souviens-toi : chaque mort dans ce lieu laisse des traces...")
+	displayIntroductionSequence(&hero)
 
 	return hero
+}
+
+func displayIntroductionSequence(hero *Character) {
+	ui.PrintSuccess(fmt.Sprintf("\n✨ %s... ton reflet prend forme : %s %s.\n", hero.Name, hero.Race, hero.Class))
+	ui.PrintInfo("💖 Vitalité : " + fmt.Sprintf("%d", hero.PvMax) + " | 🔮 Essence : " + fmt.Sprintf("%d", hero.ManaMax))
+	
+	// Séquence narrative immersive
+	fmt.Println("\n" + strings.Repeat("═", 60))
+	ui.PrintInfo("🌙 L'ÉVEIL DANS LES TÉNÈBRES 🌙")
+	fmt.Println(strings.Repeat("═", 60))
+	
+	time.Sleep(2 * time.Second)
+	ui.PrintInfo("Tes paupières s'ouvrent lentement...")
+	time.Sleep(1500 * time.Millisecond)
+	ui.PrintInfo("Autour de toi, un brouillard épais ondule comme des souvenirs flous.")
+	time.Sleep(1500 * time.Millisecond)
+	ui.PrintInfo("Tu es dans le LABYRINTHE DES CAUCHEMARS - un reflet tordu de ton subconscient.")
+	time.Sleep(2 * time.Second)
+	
+	fmt.Println()
+	ui.PrintError("🔮 Une voix résonne dans les ténèbres :")
+	time.Sleep(1 * time.Second)
+	fmt.Println("\"" + hero.Name + ", ton âme est prisonnière de ses propres chaînes...\"")
+	time.Sleep(2 * time.Second)
+	fmt.Println("\"Seuls ceux qui affrontent leurs démons les plus sombres peuvent espérer s'éveiller.\"")
+	time.Sleep(2 * time.Second)
+	fmt.Println("\"Chaque couche que tu traverseras révélera une part de ton trauma originel.\"")
+	time.Sleep(2 * time.Second)
+	
+	ui.PrintInfo("\n🌀 Le sol sous tes pieds pulse comme un cœur blessé.")
+	ui.PrintInfo("Devant toi s'étendent des chemins brumeux menant vers les profondeurs de ton être.")
+	time.Sleep(1500 * time.Millisecond)
+	
+	ui.PrintSuccess("💊 Tu découvres dans ta poche spectrale quelques fioles - des potions pour t'aider dans ce voyage périlleux.")
+	time.Sleep(1500 * time.Millisecond)
+	
+	ui.PrintError("⚠️ Rappelle-toi : chaque mort dans ce royaume laisse des cicatrices éternelles...")
+	ui.PrintError("Mais chaque victoire te rapproche de la libération de ton esprit.")
+	
+	fmt.Println("\n" + strings.Repeat("═", 60))
+	ui.PrintInfo("Ton voyage commence maintenant, " + hero.Name + "...")
+	fmt.Println(strings.Repeat("═", 60))
+	
+	ui.PressEnterToContinue(hero)
 }

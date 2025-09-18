@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	GoblinXP = 25  // Récompense XP pour tuer un gobelin
+	GoblinXP = 25 
 )
 
 type Character struct {
@@ -49,7 +49,7 @@ func InitCharacter(name, race, class string, pvMax, manaMax int) Character {
 		Level:         1,
 		PvMax:         pvMax,
 		PvCurr:        int(math.Round(float64(pvMax) * 0.5)),
-		Inventory:     []string{"Potion de vie", "Potion de vie", "Potion de vie"},
+		Inventory:     []string{"Potion de vie", "Potion de vie", "Potion de vie", "Potion de mana", "Potion de mana"},
 		InventorySize: 10,
 		Money:         100,
 		Skills:        []string{"Coup de poing"},
